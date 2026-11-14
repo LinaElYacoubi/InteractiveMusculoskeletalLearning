@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # INNOVA Movement Atlas · 0.1
 
 1. Extract the entire ZIP to a folder on a Windows x64 computer. Keep its files together.
