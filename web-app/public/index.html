@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#8f1538"><meta name="description" content="INNOVA and uOttawa's local musculoskeletal anatomy and movement teaching workspace.">
+  <title>Movement Atlas · INNOVA × uOttawa</title>
+  <link rel="icon" href="./assets/branding/innova.png"><link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="./" aria-label="INNOVA and University of Ottawa Movement Atlas"><img class="innova-logo" src="./assets/branding/innova.png" alt="INNOVA"><span class="brand-divider"></span><img class="ottawa-logo" src="./assets/branding/uottawa.png" alt="University of Ottawa"></a>
+    <div class="product-name">Movement Atlas <span>TEACHING STUDIO</span></div>
+    <nav class="workspace-tabs" aria-label="Workspace"><button class="selected" data-workspace="explore" aria-pressed="true">Explore anatomy</button><button data-workspace="movement" aria-pressed="false">Movement lab</button></nav>
+    <div class="header-actions"><span class="local-status"><i></i> Local session</span><button id="infoToggle" class="quiet-button" aria-expanded="true" aria-controls="inspector">Information</button><button id="displayMode" class="outline-button">UHD display <span aria-hidden="true">↗</span></button></div>
+  </header>
+  <main class="workspace">
+    <aside class="layer-rail" aria-label="Anatomical layers">
+      <div class="rail-heading"><span class="eyebrow">THE HUMAN BODY</span><h1>Explore<br>by layer.</h1></div>
+      <div class="layer-selector"><input id="layerSlider" type="range" min="0" max="2" step="1" value="0" aria-label="Anatomy layer: combined, muscles, bones" aria-valuetext="Bones and muscles"><div class="layer-options">
+        <button data-layer="combined" class="layer-option selected" aria-pressed="true"><span class="layer-number">01</span><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="6" r="3"/><path d="M10 12h12m-6-3v11m-5-7-3 8m13-8 3 8m-8-1-5 9m5-9 5 9"/></svg><span>Bones &amp;<br>muscles</span></button>
+        <button data-layer="muscles" class="layer-option" aria-pressed="false"><span class="layer-number">02</span><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m6 24 4-8 3 2 4-7-3-4 3-2 6 5-2 5c6 8 0 14-7 12l-4-2Z"/></svg><span>Muscles</span></button>
+        <button data-layer="bones" class="layer-option" aria-pressed="false"><span class="layer-number">03</span><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 5c-4-3-8 2-5 5-3 3 1 8 5 5l10 11c4 3 8-2 5-5 3-3-1-8-5-5Z"/></svg><span>Bones</span></button>
+      </div></div>
+      <div class="rail-bottom"><span class="eyebrow">MODEL COVERAGE</span><label class="switch-label"><input id="originalOnly" type="checkbox"><span>Original parts only</span></label><p id="coverageText">Bilateral teaching model.<br>Left counterparts are mirrored.</p><button id="guideButton" class="rail-link">About this model <span>↗</span></button><span class="rail-version">INNOVA / MSK · 0.1</span></div>
+    </aside>
+    <section class="stage-shell" aria-label="Interactive 3D anatomy">
+      <div class="stage-toolbar"><div><span class="eyebrow">MUSCULOSKELETAL SYSTEM</span><div class="stage-title" id="stageTitle">Bones &amp; muscles <span class="subtle-dot">•</span> <span id="visibleCount">Loading</span></div></div><span class="mode-badge" id="modeBadge">EXPLORE</span></div>
+      <div id="viewport" class="viewport"><canvas id="anatomyCanvas" aria-label="Rotatable 3D bones and muscles. Select a structure to identify it."></canvas><div id="floatingLabel" class="floating-label" hidden><span class="label-dot"></span><span id="floatingLabelText"></span></div>
+        <div id="loading" class="loading-state" role="status"><span class="loading-mark"></span><h2>Preparing your anatomy</h2><p id="loadingText">Loading the completed rig…</p><progress id="loadProgress" max="100" value="0" aria-label="Model loading progress"></progress></div>
+      </div>
+      <div class="stage-footer"><span class="interaction-hint">Drag to rotate <span>·</span> Scroll to zoom <span>·</span> Select a part</span><div class="view-buttons" aria-label="Camera views"><button data-view="front" class="selected">Front</button><button data-view="side">Side</button><button data-view="back">Back</button><button data-view="fit" title="Fit the whole model">Fit body</button><button id="rotateToggle" aria-pressed="false" title="Turn continuous rotation on or off">↻ Rotate</button></div></div>
+      <section class="transport" aria-label="Demonstration animations"><div class="clip-picker"><span class="eyebrow">MOVEMENT DEMONSTRATION</span><select id="clipSelect" aria-label="Demonstration movement" disabled><option>Loading animations…</option></select></div><button id="playButton" class="play-button" aria-label="Play demonstration" disabled>▶</button><input id="timeline" type="range" min="0" max="1000" value="0" aria-label="Animation position" disabled><output id="timeLabel">0.0 / 2.0 s</output><select id="playbackSpeed" aria-label="Animation speed"><option value="0.5">0.5×</option><option value="1" selected>1× speed</option><option value="1.5">1.5×</option></select><span id="motionSource" class="demo-label">SYNTHETIC DEMO</span></section>
+    </section>
+    <aside id="inspector" class="inspector" aria-label="Information and camera controls">
+      <div class="inspector-tabs" role="tablist" aria-label="Inspector"><button id="detailsTab" role="tab" aria-selected="true" aria-controls="detailsPanel">Information bank</button><button id="cameraTab" role="tab" aria-selected="false" aria-controls="cameraPanel">Camera &amp; tracking</button></div>
+      <section id="detailsPanel" role="tabpanel" aria-labelledby="detailsTab">
+        <label class="search-field"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="m12 12 5 5"/></svg><input id="partSearch" type="search" placeholder="Find a bone or muscle" aria-label="Search anatomical structures" autocomplete="off"></label><div id="searchResults" class="search-results" hidden></div>
+        <article class="part-info"><div class="info-kicker"><span id="partTissue" class="eyebrow">START EXPLORING</span><button id="clearSelection" class="text-button" hidden>Clear</button></div><h2 id="partName">Every movement<br>has a structure.</h2><p id="partDescription">Select a bone or muscle on the model to see its name, role and teaching notes.</p><div id="partFacts" class="part-facts"></div><div id="selectionActions" class="selection-actions" hidden><button id="focusPart" class="outline-button">Focus on part ↗</button><label><input id="autoFocus" type="checkbox" checked> Auto focus</label></div></article>
+        <section class="speech-card"><div class="section-heading"><span class="eyebrow">AUDIO EXPLANATION</span><span id="speechState">Ready</span></div><button id="speakButton" class="listen-button" disabled><span>◖))</span> Listen to explanation</button><div class="audio-settings"><label>Voice<select id="voiceSelect" aria-label="Narration voice"><option>Loading device voices…</option></select></label><label>Speed<select id="speechSpeed" aria-label="Narration speed"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option></select></label></div></section>
+        <div class="teaching-note"><span class="note-icon">i</span><p><strong>Built for teaching.</strong> This atlas shows available source anatomy. Mirrored geometry is labelled; muscle activation is not measured.</p></div>
+      </section>
+      <section id="cameraPanel" role="tabpanel" aria-labelledby="cameraTab" hidden>
+        <div class="section-heading"><span class="eyebrow">MOVEMENT CAPTURE</span><span id="cameraStatus" class="status-pill">Camera off</span></div><div id="cameraPreview" class="camera-preview"><video id="cameraVideo" autoplay playsinline muted></video><canvas id="landmarkCanvas" aria-label="Estimated body landmarks"></canvas><div id="cameraPlaceholder"><span>◎</span><p>Your movement,<br>in the anatomy.</p><small>The camera starts only when you choose.</small></div></div>
+        <label class="form-label">Camera<select id="cameraSelect" aria-label="Camera device"><option value="">Default camera</option></select></label><div class="camera-actions"><button id="startCamera" class="primary-button">Start camera</button><button id="stopCamera" class="outline-button" disabled>Stop</button></div><p id="cameraMessage" class="camera-message" role="status">Choose the Bose Videobar VB1 when connected. Video stays on this computer.</p>
+        <div class="tracking-steps"><span class="eyebrow">LIVE ANATOMY · EXPERIMENTAL</span><button id="prepareTracking" class="outline-button">1. Prepare pose tracking</button><button id="calibrateTracking" class="outline-button" disabled>2. Calibrate neutral stance</button><button id="startTracking" class="primary-button" disabled>3. Start live anatomy</button><button id="stopTracking" class="text-button" disabled>Pause live anatomy</button></div>
+        <label class="switch-label dark"><input id="mirrorInput" type="checkbox" checked><span>Mirror camera and movement</span></label><label class="form-label">Movement smoothing<input id="smoothing" type="range" min="0.05" max="0.35" value="0.15" step="0.01"></label>
+        <div class="capture-metrics"><div><span>POSE QUALITY</span><strong id="poseQuality">—</strong></div><div><span>INFERENCE</span><strong id="inferenceTime">—</strong></div><div><span>ATLAS RIGHT ELBOW</span><strong id="elbowAngle">—</strong></div><div><span>ATLAS RIGHT KNEE</span><strong id="kneeAngle">—</strong></div></div><p class="fine-print">Mirror mode swaps input sides. Angles are landmark estimates. This prototype does not measure muscle activity or clinical joint motion.</p>
+      </section>
+    </aside>
+  </main>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <dialog id="modelGuide"><div class="dialog-top"><span class="eyebrow">INNOVA × UOTTAWA</span><button id="closeGuide" class="quiet-button" aria-label="Close model guide">✕</button></div><h2>A foundation for<br>understanding movement.</h2><p>The completed anatomical asset contains 262 original meshes and 225 labelled mirrored counterparts. The rig has 79 joints and four synthetic demonstration animations.</p><p>Some source muscles, including much of the abdominal wall, are absent. Joint pivots and muscle deformation are fitted for an initial teaching prototype. Precise biomechanics need review with the teaching team.</p><p>Camera tracking runs locally and is experimental. It estimates body landmarks and applies their directions to the rig. No video recording or uploading is implemented.</p><button id="guideContinue" class="primary-button">Explore the atlas</button></dialog>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>

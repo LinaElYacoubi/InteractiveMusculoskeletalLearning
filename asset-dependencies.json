@@ -1,0 +1,107 @@
+{
+  "app": "INNOVA Movement Atlas",
+  "version": "0.1.0",
+  "date": "2026-11-12",
+  "three": "0.170.0",
+  "mediapipe": "1.2.2",
+  "node": "24.22.1 (Windows x64)",
+  "pose_model_source": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+  "pose_model_bundled": true,
+  "files": [
+    {
+      "file": "web-app/public/assets/bone-map.json",
+      "bytes": 27817,
+      "sha256": "29ca3cfe08faf3a79c5b3481718df14645b7f4f8bef1cc65a48affa92a537350"
+    },
+    {
+      "file": "web-app/public/assets/branding/innova.png",
+      "bytes": 28372,
+      "sha256": "d57f51c3f48d438435e7d4a2879a85e20b41bbfcf38c2e56da1b6f9fd48fca1b"
+    },
+    {
+      "file": "web-app/public/assets/branding/uottawa.png",
+      "bytes": 18874,
+      "sha256": "9e6117f54bfb505fa07ad2a2d270c6ad9941ebaa98a8c32530c7ee54f765a0b7"
+    },
+    {
+      "file": "web-app/public/assets/INNOVA-Musculoskeletal-Rig.glb",
+      "bytes": 42464612,
+      "sha256": "4213a45fafc3ea614afbc3481118fdf03d154b9f0af7c6887b6f18a76a6ccfc9"
+    },
+    {
+      "file": "web-app/public/vendor/mediapipe/LICENSE",
+      "bytes": 12331,
+      "sha256": "8707eef0533987efc5b155d64761eeb6e20793f50b9bd1a68dad1cf4719d0ed8"
+    },
+    {
+      "file": "web-app/public/vendor/mediapipe/package.json",
+      "bytes": 1026,
+      "sha256": "8a1a3ac021e8b558a4f204fb69ec4b8a8926ae57e4b9807e2fa9c7545232a232"
+    },
+    {
+      "file": "web-app/public/vendor/mediapipe/pose_landmarker_lite.task",
+      "bytes": 5777746,
+      "sha256": "59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a"
+    },
+    {
+      "file": "web-app/public/vendor/mediapipe/vision_bundle.mjs",
+      "bytes": 156062,
+      "sha256": "b65acb59b370cd6561afd9d04c29ed7a87e7ed6386922ac1b263af1f1ad06b7d"
+    },
+    {
+      "file": "web-app/public/vendor/mediapipe/wasm/vision_wasm_internal.js",
+      "bytes": 334128,
+      "sha256": "f2b9c17131ea79716ec6bf07b117a087b2749a6f8a1e2f1f2e77a9382092db5b"
+    },
+    {
+      "file": "web-app/public/vendor/mediapipe/wasm/vision_wasm_internal.wasm",
+      "bytes": 14603354,
+      "sha256": "f5bd25147ac89d506074293ce2675969b10e827180db95a0d9689c2ed80764ab"
+    },
+    {
+      "file": "web-app/public/vendor/mediapipe/wasm/vision_wasm_module_internal.js",
+      "bytes": 334166,
+      "sha256": "72fba0ac8a4034ce9d63f68389df1dead52069409ea621688eedf97f01d4362f"
+    },
+    {
+      "file": "web-app/public/vendor/mediapipe/wasm/vision_wasm_module_internal.wasm",
+      "bytes": 14603372,
+      "sha256": "b8927a2eebfe80dd98a426a210a9e820c8215168c06f3bcf5d4d09080f623db5"
+    },
+    {
+      "file": "web-app/public/vendor/three/BufferGeometryUtils.js",
+      "bytes": 33153,
+      "sha256": "eaa995f7343c6f5b44d75e65f0b461e703c1a90146a917d93a74977add0c2e7a"
+    },
+    {
+      "file": "web-app/public/vendor/three/GLTFLoader.js",
+      "bytes": 115005,
+      "sha256": "dd15ce7399771a594c1484a958c06bfb47058e05d95720b25b57090094f91389"
+    },
+    {
+      "file": "web-app/public/vendor/three/OrbitControls.js",
+      "bytes": 33669,
+      "sha256": "a6f978dc907dbd5814023bd00a8b97feebd97e72d09ab921ccb49ee401ce9066"
+    },
+    {
+      "file": "web-app/public/vendor/three/THREE-LICENSE.txt",
+      "bytes": 1081,
+      "sha256": "4c40a1ef62450b857c3b2aaf294936304cd552d965fbcd9d32d4c5bcf4ba4454"
+    },
+    {
+      "file": "web-app/public/vendor/three/three.module.js",
+      "bytes": 1314681,
+      "sha256": "ce1fa418de16a19495a9f72495580e3015d7745c296d3ce0485897f902ddedfb"
+    },
+    {
+      "file": "web-app/runtime/NODE-LICENSE.txt",
+      "bytes": 157609,
+      "sha256": "5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace"
+    },
+    {
+      "file": "web-app/runtime/node.exe",
+      "bytes": 93713712,
+      "sha256": "8a60a8e441a0a85cfef7eec0478a907bdef1a10a2fc4c7a7ef0f88b196ac61de"
+    }
+  ]
+}

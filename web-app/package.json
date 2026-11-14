@@ -1,0 +1,9 @@
+{
+  "name": "innova-movement-atlas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local, modular anatomy and camera movement teaching application",
+  "scripts": { "start": "node server.mjs", "test": "node --test tests/*.test.mjs" },
+  "engines": { "node": ">=20" }
+}
