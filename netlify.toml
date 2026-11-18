@@ -1,0 +1,49 @@
+# Netlify deployment of the browser app.
+# The app is static files in web-app/public: there is no build step and nothing to install.
+# The local server (web-app/server.mjs), launcher and Windows runtime are not deployed.
+
+[build]
+  publish = "web-app/public"
+  command = "echo 'No build step: publishing web-app/public as is'"
+
+# Same security headers as web-app/server.mjs. Keep the two in sync
+# (tests/deploy.test.mjs checks this).
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "camera=(self), microphone=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob:; worker-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+
+# Explicit types for the 3D model, pose model and WebAssembly files.
+[[headers]]
+  for = "/*.wasm"
+  [headers.values]
+    Content-Type = "application/wasm"
+
+[[headers]]
+  for = "/*.glb"
+  [headers.values]
+    Content-Type = "model/gltf-binary"
+
+[[headers]]
+  for = "/*.task"
+  [headers.values]
+    Content-Type = "application/octet-stream"
+
+[[headers]]
+  for = "/*.mjs"
+  [headers.values]
+    Content-Type = "text/javascript; charset=utf-8"
+
+# Code and page files must not be served stale after a new deploy.
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"

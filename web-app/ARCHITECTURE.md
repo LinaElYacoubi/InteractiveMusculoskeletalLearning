@@ -11,6 +11,8 @@ The application uses ES modules and a small Node static server. There is no buil
 | Pose interpretation | public/src/motion/pose-math.js | Confidence gates, mirror convention, directions and angle estimates |
 | Rig retargeting | public/src/motion/retarget.js | Neutral calibration offsets, parent-aware joint rotation, smoothing and rest recovery |
 | Teaching content | public/src/data/knowledge.js | Original source names, reviewed-later group context and explicit content gaps |
+| Lesson content | public/src/data/lessons/elbow-flexion.js | Bilingual draft text, sources, claim→source links, highlight rules by exact `anatomy_name`, review status |
+| Guided lesson | public/src/lesson/ | DOM-free step controller (camera/tracking ownership, cleanup), exact highlight resolution, content validation, panel view |
 | Narration | public/src/ui/speech.js | Local device voices, rate selection, start/cancel lifecycle |
 | UI coordination | public/src/app.js | DOM events, inspector state, playback, calibration and tracked/demo modes |
 | Presentation | public/index.html + styles.css | White display, red layer rail, responsive inspector and UHD layout |
@@ -23,6 +25,12 @@ CameraInput → ImageBitmap → PoseDetection worker → confidence-filtered lan
 Raw camera frames are transferred to the local worker and closed after inference. There is no camera upload or recording API. The static server only accepts GET/HEAD and serves the public directory plus a local health endpoint. It binds to 127.0.0.1. Its Content Security Policy permits local files and blob-backed embedded textures; it does not permit third-party network destinations.
 
 The renderer and inference run independently. Rendering size follows the actual viewport using ResizeObserver, without a fixed landscape canvas. Demo clip framing includes its peak pose; clicking Fit body restores full-body framing. The UHD interface can operate even when an embedded browser does not allow the fullscreen API; use F11 in desktop Chrome/Edge for browser fullscreen if needed.
+
+## Guided lesson integration
+
+The lesson reuses the single viewer render loop, the shared CameraInput and PoseDetection instances, and the existing elbow clip. It keeps its own PoseRetargeter, calibrated on `upper_arm.R` and `forearm.R` only through the optional `segments` argument. Movement lab's default full-body calibration is unchanged. Entering the lesson pauses Movement lab live anatomy. On exit the lesson restores the saved layer, coverage, clip, speed and rotation, fits the body and clears highlights and fading.
+
+The controller records whether it started the camera and pose loop and releases only what it started. All of its listeners share one AbortController per tracking session. A pending camera request is cancelled through CameraInput's generation check. The viewer adds `setHighlight`/`clearHighlight` (which stack under selection), `setGhost`/`clearGhost`, `lookFrom` and `frameParts`.
 
 ## Coordinate conventions
 
