@@ -1,3 +1,5 @@
+app is deloyed in netlify and gets updated with changes automatically when we push to github : https://interactivemusculoskeletal.netlify.app/
+
 # INNOVA Movement Atlas · 0.1
 
 1. Extract the entire ZIP to a folder on a Windows x64 computer. Keep its files together.
