@@ -5,7 +5,7 @@ import { GLTFLoader } from '../../vendor/three/GLTFLoader.js';
 export class AnatomyViewer extends EventTarget {
   constructor(canvas,container) {
     super();this.canvas=canvas;this.container=container;this.parts=[];this.bones=new Map();this.rest=new Map();
-    this.layer='combined';this.originalOnly=false;this.playing=false;this.speed=1;this.autoRotate=false;this.selected=null;this.live=false;
+    this.layer='combined';this.originalOnly=false;this.playing=false;this.speed=1;this.autoRotate=false;this.selected=null;this.live=false;this.highlights=new Map();this.ghosted=new Set();
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#ffffff');
     this.camera=new THREE.OrthographicCamera(-1,1,1,-1,.01,100);this.camera.position.set(0,.88,4);
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
@@ -97,15 +97,66 @@ export class AnatomyViewer extends EventTarget {
     this.dispatchEvent(new CustomEvent('visibility',{detail:this.parts.filter(p=>p.visible).length}));
   }
   isMirrored(part){return String(part.userData.provenance).startsWith('mirrored');}
+  // Selection tint wins over a lesson highlight; clearing either restores the other or the original.
+  paint(part){
+    const highlight=this.highlights.get(part);
+    for(const material of this.materials(part)){
+      if(part===this.selected)material.emissive.setRGB(.23,.012,.035);
+      else if(highlight)material.emissive.copy(highlight);
+      else material.emissive.copy(material.userData.originalEmissive);
+    }
+  }
   select(part,focus=false){
-    if(this.selected)for(const material of this.materials(this.selected))material.emissive.copy(material.userData.originalEmissive);
-    this.selected=part;
+    const previous=this.selected;this.selected=part;
+    if(previous)this.paint(previous);
     if(part){
       if(!part.visible){this.setLayer('combined',this.isMirrored(part)?false:this.originalOnly);}
-      for(const material of this.materials(part))material.emissive.setRGB(.23,.012,.035);
+      this.paint(part);
       if(focus)this.focus(part);
     }
     this.dispatchEvent(new CustomEvent('selection',{detail:part}));
+  }
+  setHighlight(parts,color='#b62749',strength=.6){
+    this.clearHighlight();
+    const tint=new THREE.Color(color).multiplyScalar(strength);
+    for(const part of parts){this.highlights.set(part,tint);this.paint(part);}
+  }
+  clearHighlight(){
+    const parts=[...this.highlights.keys()];this.highlights.clear();
+    for(const part of parts)this.paint(part);
+  }
+  // Fades every part except `keep` so a region stands out; ghosted parts are not pickable.
+  setGhost(keep,opacity=.14){
+    this.clearGhost();const kept=new Set(keep);
+    for(const part of this.parts){
+      if(kept.has(part))continue;this.ghosted.add(part);
+      for(const material of this.materials(part)){material.transparent=true;material.opacity=opacity;material.depthWrite=false;material.needsUpdate=true;}
+    }
+  }
+  clearGhost(){
+    for(const part of this.ghosted)for(const material of this.materials(part)){material.transparent=false;material.opacity=1;material.depthWrite=true;material.needsUpdate=true;}
+    this.ghosted.clear();
+  }
+  // Points the orbit camera from a direction around the current target (e.g. a front-right oblique).
+  lookFrom(direction){
+    this.tween=null;this.autoRotate=false;this.controls.autoRotate=false;
+    this.camera.position.copy(this.controls.target).add(new THREE.Vector3(...direction).normalize().multiplyScalar(4));
+    this.camera.up.set(0,1,0);this.controls.update();this.dispatchEvent(new Event('rotationchange'));
+  }
+  // Frames a group of parts; optionally includes the current clip's mid-point (peak) pose.
+  frameParts(parts,{includeClipPeak=false,padding=1.45}={}){
+    if(!parts.length||!this.model)return;
+    this.model.updateMatrixWorld(true);
+    const box=this.computeBounds(parts);
+    if(includeClipPeak&&this.action&&this.currentClip){
+      const time=this.action.time;
+      this.action.time=this.currentClip.duration/2;this.mixer.update(0);this.model.updateMatrixWorld(true);box.union(this.computeBounds(parts));
+      this.action.time=time;this.mixer.update(0);this.model.updateMatrixWorld(true);
+    }
+    const size=box.getSize(new THREE.Vector3()),aspect=this.width/this.height;
+    const wanted=Math.max(size.y*padding,Math.hypot(size.x,size.z)*padding/aspect,.25);
+    const fullHeight=this.camera.top-this.camera.bottom;
+    this.moveCamera(box.getCenter(new THREE.Vector3()),Math.min(7,Math.max(1,fullHeight/wanted)));
   }
   focus(part=this.selected){
     if(!part)return;this.model.updateMatrixWorld(true);
@@ -119,7 +170,7 @@ export class AnatomyViewer extends EventTarget {
     if(!this.model)return;
     const rect=this.canvas.getBoundingClientRect();this.pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
     this.raycaster.setFromCamera(this.pointer,this.camera);
-    const visible=this.parts.filter(p=>p.visible);
+    const visible=this.parts.filter(p=>p.visible&&!this.ghosted.has(p));
     for(const part of visible)if(part.isSkinnedMesh)part.computeBoundingSphere();
     const hit=this.raycaster.intersectObjects(visible,false)[0];
     if(hit)this.select(hit.object,document.querySelector('#autoFocus').checked);else this.select(null);

@@ -1,3 +1,4 @@
+import {t} from '../i18n/i18n.js';
 export class CameraInput extends EventTarget {
   constructor(video){super();this.video=video;this.stream=null;this.generation=0;}
   async devices(){
@@ -5,7 +6,7 @@ export class CameraInput extends EventTarget {
     return (await navigator.mediaDevices.enumerateDevices()).filter(device=>device.kind==='videoinput');
   }
   async start(deviceId){
-    if(!navigator.mediaDevices?.getUserMedia)throw new Error('Camera access needs localhost or HTTPS in a supported browser. Use Start Movement Atlas.cmd.');
+    if(!navigator.mediaDevices?.getUserMedia)throw Object.assign(new Error('Camera access needs localhost or HTTPS in a supported browser. Use Start Movement Atlas.cmd.'),{name:'InsecureContextError'});
     this.stop();const generation=++this.generation;
     const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{...(deviceId?{deviceId:{exact:deviceId}}:{}),width:{ideal:1280},height:{ideal:720},frameRate:{ideal:24,max:30}}});
     if(generation!==this.generation){stream.getTracks().forEach(track=>track.stop());return;}
@@ -21,7 +22,6 @@ export class CameraInput extends EventTarget {
   }
   get active(){return Boolean(this.stream?.active);}
 }
-export function cameraError(error){
-  const messages={NotAllowedError:'Camera permission was not granted. Allow camera access in the browser, then try again.',NotFoundError:'No camera was found. Connect the Bose VB1 or another webcam and try again.',NotReadableError:'The camera is unavailable or being used by another app. Close other camera apps and retry.',OverconstrainedError:'The selected camera is no longer available. Choose another device.'};
-  return messages[error.name]||error.message||'The camera could not be opened.';
-}
+const ERROR_KEYS={NotAllowedError:'camera.error.notAllowed',NotFoundError:'camera.error.notFound',NotReadableError:'camera.error.notReadable',OverconstrainedError:'camera.error.overconstrained',InsecureContextError:'camera.error.insecure'};
+export function cameraErrorKey(error){return ERROR_KEYS[error?.name]||'camera.error.generic';}
+export function cameraError(error){return t(cameraErrorKey(error));}
