@@ -10,6 +10,7 @@ The application uses ES modules and a small Node static server. There is no buil
 | Pose detection | public/src/motion/pose.js + pose-worker.js | Single-frame-in-flight scheduling, local CPU inference, readiness and error recovery |
 | Pose interpretation | public/src/motion/pose-math.js | Confidence gates, mirror convention, directions and angle estimates |
 | Rig retargeting | public/src/motion/retarget.js | Neutral calibration offsets, parent-aware joint rotation, smoothing and rest recovery |
+| Movement insight | public/src/motion/movement-insight.js | Joint angle and speed from the rig, movement naming, main bones and muscles per movement, part matching |
 | Teaching content | public/src/data/knowledge.js | Original source names, reviewed-later group context and explicit content gaps |
 | Narration | public/src/ui/speech.js | Local device voices, rate selection, start/cancel lifecycle |
 | UI coordination | public/src/app.js | DOM events, inspector state, playback, calibration and tracked/demo modes |
@@ -19,6 +20,8 @@ The application uses ES modules and a small Node static server. There is no buil
 ## Data path
 
 CameraInput → ImageBitmap → PoseDetection worker → confidence-filtered landmarks → neutral calibration → PoseRetargeter → existing skeleton → Three.js skinning → display.
+
+The skeleton (live or demo clip) → MovementTracker → moving joints and movement direction → highlighted bones and muscles plus the "What's moving" panel. The tracker reads the rig, not the camera, so demonstrations and live movement are explained the same way. Muscle lists are textbook associations for each movement direction, not measured activity; trunk muscles are absent from the source anatomy and are reported as a gap.
 
 Raw camera frames are transferred to the local worker and closed after inference. There is no camera upload or recording API. The static server only accepts GET/HEAD and serves the public directory plus a local health endpoint. It binds to 127.0.0.1. Its Content Security Policy permits local files and blob-backed embedded textures; it does not permit third-party network destinations.
 

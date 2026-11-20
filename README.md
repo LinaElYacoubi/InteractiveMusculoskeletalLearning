@@ -8,6 +8,8 @@ No Node/npm installation, internet hosting, or Blender installation is required 
 
 Explore anatomy includes bones, muscles and combined layers; original-only coverage; structure search/selection; floating labels and automatic focus; narration voice/speed; and four synthetic demo animations. Use UHD display for the large portrait layout. If fullscreen is unavailable inside an embedded browser, open the app in desktop Chrome/Edge and use F11.
 
+While you move (or a demonstration plays), the "What's moving" panel names each moving joint (shoulders, elbows, hips, knees, trunk), the movement (for example elbow flexion), and the main bones and muscles involved. Those structures are coloured on the model: orange for muscles, blue for bones. Select a name to open it in the information bank. Muscle lists are textbook associations, not measured activity.
+
 Movement lab includes opt-in camera preview, camera selection, local pose detection, neutral calibration and experimental live rig retargeting. Start the camera, prepare tracking, stand with the full body visible and arms relaxed, calibrate, then start live anatomy. Changing mirror mode needs recalibration. Stop releases the camera. No recording or video upload is implemented.
 
 The first retargeter drives limb directions and a simplified torso lean. It does not track root translation, independent hand/foot orientation or fingers. It does not measure muscle activity or validated clinical joint motion. Source muscles remain incomplete; mirrored anatomy is labelled. The physical Bose VB1/ARHT capsule workflow and latency still need on-device verification with the teaching team.

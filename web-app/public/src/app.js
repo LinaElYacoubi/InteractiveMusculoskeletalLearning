@@ -5,12 +5,14 @@ import {CameraInput,cameraError} from './motion/camera.js';
 import {PoseDetection} from './motion/pose.js';
 import {PoseRetargeter} from './motion/retarget.js';
 import {CONNECTIONS,poseMetrics} from './motion/pose-math.js';
+import {MovementTracker,partsForMovements} from './motion/movement-insight.js';
 
 const $=id=>document.getElementById(id);
 const LAYERS=['combined','muscles','bones'];
 const LAYER_NAMES={combined:'Bones & muscles',muscles:'Muscles',bones:'Bones'};
 const CLIP_NAMES={Movement_Demo:'Combined movement',Elbow_Flexion_R:'Right elbow flexion',Knee_Flexion_R:'Right knee flexion',Shoulder_Elevation_R:'Right shoulder elevation'};
 let viewer,retargeter,selectedInfo,live=false,lastPose=null,lastPoseAt=0,lastReliableAt=0,lastApplyAt=0,workspace='explore',display=false,previousInspectorHidden=false;
+const tracker=new MovementTracker();let insightKey='',partNames=new Map();
 const camera=new CameraInput($('cameraVideo'));const pose=new PoseDetection($('cameraVideo'));
 const narration=new Narration($('voiceSelect'),$('speechSpeed'),$('speechState'),()=>{$('speakButton').replaceChildren(make('span','◖))'),document.createTextNode(' Listen to explanation'));});
 function make(tag,text,className){const element=document.createElement(tag);element.textContent=text;if(className)element.className=className;return element;}
@@ -60,7 +62,7 @@ function search(){
 }
 function setLive(value){
   if(value && (!camera.active||!retargeter?.calibrated||performance.now()-lastPoseAt>1000)){toast('Start the camera and calibrate a visible neutral stance first.');return;}
-  live=value;if(value){viewer.startLive();lastReliableAt=performance.now();}else viewer?.stopLive();
+  live=value;if(value){viewer.startLive();lastReliableAt=performance.now();}else viewer?.stopLive();resetInsight();
   $('startTracking').textContent=value?'Live anatomy running':'3. Start live anatomy';$('startTracking').disabled=value||!retargeter?.calibrated||!camera.active;
   $('stopTracking').disabled=!value;updateMode();
 }
@@ -83,6 +85,35 @@ function drawLandmarks(points){
   for(const [a,b] of CONNECTIONS){if(!points[a]||!points[b]||(points[a].visibility??1)<.55||(points[b].visibility??1)<.55)continue;context.beginPath();context.moveTo(points[a].x*canvas.width,points[a].y*canvas.height);context.lineTo(points[b].x*canvas.width,points[b].y*canvas.height);context.stroke();}
   for(const p of points){if((p.visibility??1)<.55)continue;context.beginPath();context.arc(p.x*canvas.width,p.y*canvas.height,4,0,Math.PI*2);context.fill();}
 }
+// "What's moving": joints the rig is currently rotating, with the bones and muscles involved.
+function angleText(item){return `${Math.round(item.angle)}° ${item.joint.kind==='hinge'?'bend':item.joint.kind==='trunk'?'lean':'from side'}`;}
+function firstPart(entry,side){return viewer.parts.find(part=>part.visible&&(!side||part.userData.anatomical_side===side)&&entry.match.test(partNames.get(part)));}
+function chips(entries,side){
+  const box=make('div','', 'insight-chips');
+  for(const entry of entries){const button=make('button',entry.label);button.type='button';button.title=`Show ${entry.label} in the information bank`;
+    button.addEventListener('click',()=>{const part=firstPart(entry,side);if(part)viewer.select(part,false);else toast(`${entry.label} is hidden by the current layer.`);});box.append(button);}
+  return box;
+}
+function row(kind,content){const element=make('div','','insight-row');element.append(make('span','',`swatch ${kind}`),content);return element;}
+function renderInsight(moving){
+  const key=moving.map(m=>m.key).join('|');
+  if(key===insightKey){for(const item of moving){const angle=$('insightList').querySelector(`[data-joint="${item.id}"] .insight-angle`);if(angle)angle.textContent=angleText(item);}return;}
+  insightKey=key;$('insightEmpty').hidden=moving.length>0;
+  const list=$('insightList');list.replaceChildren();
+  for(const item of moving.slice(0,3)){
+    const article=make('article','','insight-item');article.dataset.joint=item.id;
+    const header=document.createElement('header');const angle=make('span',angleText(item),'insight-angle');angle.setAttribute('aria-hidden','true');header.append(make('strong',item.label),angle);
+    article.append(header,make('p',`${item.verb} · ${item.movement}`,'insight-move'));
+    if(item.muscles.length)article.append(row('muscle',chips(item.muscles,item.side)));
+    article.append(row('bone',chips(item.bones,item.side)));
+    if(item.gap)article.append(make('p',item.gap,'insight-gap'));
+    list.append(article);
+  }
+  if(moving.length>3)list.append(make('p',`+${moving.length-3} more moving`,'insight-gap'));
+  viewer.setHighlights($('highlightMoving').checked?partsForMovements(moving,viewer.parts,part=>partNames.get(part)):new Map());
+}
+function resetInsight(){tracker.reset();insightKey=null;renderInsight([]);}
+
 async function init(){
   if(window.innerWidth<=1000)inspector(false);
   try{
@@ -94,7 +125,10 @@ async function init(){
     let lastUI=0;
     viewer.addEventListener('frame',({detail})=>{
       const now=performance.now();
-      if(live&&now-lastReliableAt>900){retargeter.easeToRest(detail.dt);$('modeBadge').textContent='TRACKING LOST · RETURNING TO REST';}
+      const lost=live&&now-lastReliableAt>900;
+      if(lost){retargeter.easeToRest(detail.dt);$('modeBadge').textContent='TRACKING LOST · RETURNING TO REST';}
+      // Returning to rest after tracking loss is not the learner's movement, so it is not explained.
+      if(viewer.model){const moving=lost?[]:tracker.update(viewer.bones,detail.dt,now,viewer.model.quaternion);if(now-lastUI>70)renderInsight(moving);}
       if(now-lastUI>70){
         if(!live){$('timeline').value=Math.round(detail.time/detail.duration*1000);$('timeLabel').textContent=`${detail.time.toFixed(1)} / ${detail.duration.toFixed(1)} s`;}
         const point=viewer.selectedScreenPoint();
@@ -103,6 +137,7 @@ async function init(){
       }
     });
     await viewer.load();retargeter=new PoseRetargeter(viewer);
+    partNames=new Map(viewer.parts.map(part=>[part,displayName(part).toLowerCase()]));
     $('loading').hidden=true;$('clipSelect').replaceChildren();
     // Start with a compact movement so the full-height body fills a portrait display.
     const priority=['Elbow_Flexion_R','Knee_Flexion_R','Shoulder_Elevation_R','Movement_Demo'];
@@ -121,7 +156,8 @@ $('originalOnly').addEventListener('change',event=>{viewer?.setLayer(viewer.laye
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{viewer?.setView(button.dataset.view);document.querySelectorAll('[data-view]').forEach(other=>other.classList.toggle('selected',other===button));}));
 $('rotateToggle').addEventListener('click',()=>{if(!viewer)return;viewer.autoRotate=!viewer.autoRotate;$('rotateToggle').setAttribute('aria-pressed',String(viewer.autoRotate));});
 $('playButton').addEventListener('click',()=>{viewer?.setPlaying(!viewer.playing);updateMode();});
-$('clipSelect').addEventListener('change',event=>{if(live)setLive(false);viewer?.setClip(event.target.value);updateMode();});
+$('clipSelect').addEventListener('change',event=>{if(live)setLive(false);viewer?.setClip(event.target.value);resetInsight();updateMode();});
+$('highlightMoving').addEventListener('change',()=>{insightKey=null;});
 $('timeline').addEventListener('input',event=>viewer?.seek(Number(event.target.value)/1000));
 $('playbackSpeed').addEventListener('change',event=>{if(viewer)viewer.speed=Number(event.target.value);});
 $('partSearch').addEventListener('input',search);$('clearSelection').addEventListener('click',()=>viewer?.select(null));$('focusPart').addEventListener('click',()=>viewer?.focus());
@@ -182,7 +218,7 @@ pose.addEventListener('pose',({detail})=>{
 pose.addEventListener('failure',({detail})=>{if(live)setLive(false);pose.dispose();retargeter?.invalidate();$('prepareTracking').disabled=false;$('prepareTracking').textContent='1. Retry pose tracking';$('cameraMessage').textContent='Tracking paused: '+detail;updateCalibration();toast('Tracking could not continue. Camera preview remains local.');});
 $('calibrateTracking').addEventListener('click',()=>{
   if(!lastPose||performance.now()-lastPoseAt>1000){toast('A fresh full-body pose is needed.');return;}
-  try{if(live)setLive(false);retargeter.calibrate(lastPose.worldLandmarks,$('mirrorInput').checked);$('calibrateTracking').textContent='2. Neutral stance calibrated';$('cameraMessage').textContent='Neutral stance captured. Start live anatomy to drive the rig with your movement.';updateCalibration();}
+  try{if(live)setLive(false);retargeter.calibrate(lastPose.worldLandmarks,$('mirrorInput').checked);resetInsight();$('calibrateTracking').textContent='2. Neutral stance calibrated';$('cameraMessage').textContent='Neutral stance captured. Start live anatomy to drive the rig with your movement.';updateCalibration();}
   catch(error){toast(error.message);}
 });
 $('startTracking').addEventListener('click',()=>setLive(true));$('stopTracking').addEventListener('click',()=>setLive(false));

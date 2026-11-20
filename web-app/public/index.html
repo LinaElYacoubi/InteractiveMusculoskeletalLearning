@@ -26,6 +26,13 @@
     <section class="stage-shell" aria-label="Interactive 3D anatomy">
       <div class="stage-toolbar"><div><span class="eyebrow">MUSCULOSKELETAL SYSTEM</span><div class="stage-title" id="stageTitle">Bones &amp; muscles <span class="subtle-dot">•</span> <span id="visibleCount">Loading</span></div></div><span class="mode-badge" id="modeBadge">EXPLORE</span></div>
       <div id="viewport" class="viewport"><canvas id="anatomyCanvas" aria-label="Rotatable 3D bones and muscles. Select a structure to identify it."></canvas><div id="floatingLabel" class="floating-label" hidden><span class="label-dot"></span><span id="floatingLabelText"></span></div>
+        <section id="motionInsight" class="motion-insight" aria-labelledby="insightTitle">
+          <div class="insight-head"><span id="insightTitle" class="eyebrow">WHAT'S MOVING</span><label class="insight-toggle"><input id="highlightMoving" type="checkbox" checked> Colour on model</label></div>
+          <div id="insightList" class="insight-list" aria-live="polite"></div>
+          <p id="insightEmpty" class="insight-empty">Move in front of the camera, or play a demonstration, to see which bones and muscles are involved.</p>
+          <div class="insight-legend" aria-hidden="true"><span><i class="swatch muscle"></i>Muscles</span><span><i class="swatch bone"></i>Bones</span></div>
+          <p class="insight-note">Muscles shown are the main ones textbooks link to each movement. Muscle activity is not measured.</p>
+        </section>
         <div id="loading" class="loading-state" role="status"><span class="loading-mark"></span><h2>Preparing your anatomy</h2><p id="loadingText">Loading the completed rig…</p><progress id="loadProgress" max="100" value="0" aria-label="Model loading progress"></progress></div>
       </div>
       <div class="stage-footer"><span class="interaction-hint">Drag to rotate <span>·</span> Scroll to zoom <span>·</span> Select a part</span><div class="view-buttons" aria-label="Camera views"><button data-view="front" class="selected">Front</button><button data-view="side">Side</button><button data-view="back">Back</button><button data-view="fit" title="Fit the whole model">Fit body</button><button id="rotateToggle" aria-pressed="false" title="Turn continuous rotation on or off">↻ Rotate</button></div></div>

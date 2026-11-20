@@ -2,10 +2,14 @@ import * as THREE from '../../vendor/three/three.module.js';
 import { OrbitControls } from '../../vendor/three/OrbitControls.js';
 import { GLTFLoader } from '../../vendor/three/GLTFLoader.js';
 
+const SELECTED=new THREE.Color().setRGB(.23,.012,.035);
+// Moving structures are recoloured (an emissive glow alone cannot tint white bone).
+const HIGHLIGHT={muscle:{color:new THREE.Color('#ff8a2a'),emissive:new THREE.Color().setRGB(.22,.06,0)},bone:{color:new THREE.Color('#6ea4ff'),emissive:new THREE.Color().setRGB(0,.05,.16)}};
+
 export class AnatomyViewer extends EventTarget {
   constructor(canvas,container) {
     super();this.canvas=canvas;this.container=container;this.parts=[];this.bones=new Map();this.rest=new Map();
-    this.layer='combined';this.originalOnly=false;this.playing=false;this.speed=1;this.autoRotate=false;this.selected=null;this.live=false;
+    this.highlighted=new Map();this.layer='combined';this.originalOnly=false;this.playing=false;this.speed=1;this.autoRotate=false;this.selected=null;this.live=false;
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#ffffff');
     this.camera=new THREE.OrthographicCamera(-1,1,1,-1,.01,100);this.camera.position.set(0,.88,4);
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
@@ -44,7 +48,7 @@ export class AnatomyViewer extends EventTarget {
         object.material=Array.isArray(object.material)?object.material.map(m=>m.clone()):object.material.clone();
         for(const material of this.materials(object)){
           material.metalness=0;material.roughness=.67;material.transparent=false;material.opacity=1;
-          material.userData.originalEmissive=material.emissive.clone();
+          material.userData.originalEmissive=material.emissive.clone();material.userData.originalColor=material.color.clone();
         }
         object.userData.originalAnatomyName=object.userData.anatomy_name;
         this.parts.push(object);
@@ -97,12 +101,24 @@ export class AnatomyViewer extends EventTarget {
     this.dispatchEvent(new CustomEvent('visibility',{detail:this.parts.filter(p=>p.visible).length}));
   }
   isMirrored(part){return String(part.userData.provenance).startsWith('mirrored');}
+  // Emissive tint: a clicked selection wins over a movement highlight, which wins over the original colour.
+  paint(part){
+    const highlight=HIGHLIGHT[this.highlighted.get(part)],selected=part===this.selected;
+    for(const material of this.materials(part)){
+      material.color.copy(highlight?highlight.color:material.userData.originalColor);
+      material.emissive.copy(selected?SELECTED:highlight?highlight.emissive:material.userData.originalEmissive);
+    }
+  }
+  setHighlights(map){
+    const previous=this.highlighted;this.highlighted=map;
+    for(const part of new Set([...previous.keys(),...map.keys()]))if(previous.get(part)!==map.get(part))this.paint(part);
+  }
   select(part,focus=false){
-    if(this.selected)for(const material of this.materials(this.selected))material.emissive.copy(material.userData.originalEmissive);
-    this.selected=part;
+    const previous=this.selected;this.selected=part;
+    if(previous)this.paint(previous);
     if(part){
       if(!part.visible){this.setLayer('combined',this.isMirrored(part)?false:this.originalOnly);}
-      for(const material of this.materials(part))material.emissive.setRGB(.23,.012,.035);
+      this.paint(part);
       if(focus)this.focus(part);
     }
     this.dispatchEvent(new CustomEvent('selection',{detail:part}));
