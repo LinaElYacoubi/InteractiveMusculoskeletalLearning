@@ -27,7 +27,4 @@ The lesson has five steps: Introduction → Watch the movement (scripted demonst
 The first retargeter drives limb directions and a simplified torso lean. It does not track root translation, independent hand/foot orientation or fingers. It does not measure muscle activity or validated clinical joint motion. Source muscles remain incomplete; mirrored anatomy is labelled. The physical Bose VB1/ARHT capsule workflow and latency still need on-device verification with the teaching team.
 
 Source modules, tests and architecture notes are in web-app/. The completed editable Blender asset package is maintained separately in the Musculoskeletal Project folder. This ZIP includes the rigged GLB required for playback, all browser dependencies and the Windows runtime.
-=======
-# InteractiveMusculoskeletalLearning
-Interactive Musculoskeletal Learning Experience
 
