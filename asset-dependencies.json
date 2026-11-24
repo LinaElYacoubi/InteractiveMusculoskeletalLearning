@@ -1,13 +1,16 @@
 {
   "app": "INNOVA Movement Atlas",
   "version": "0.1.0",
-  "date": "2026-11-12",
+  "date": "2026-11-18",
   "three": "0.170.0",
   "mediapipe": "1.2.2",
   "node": "24.22.1 (Windows x64)",
-  "pose_model_source": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-  "pose_model_bundled": true,
   "files": [
+    {
+      "file": "web-app/public/assets/INNOVA-Musculoskeletal-Rig.glb",
+      "bytes": 42464612,
+      "sha256": "4213a45fafc3ea614afbc3481118fdf03d154b9f0af7c6887b6f18a76a6ccfc9"
+    },
     {
       "file": "web-app/public/assets/bone-map.json",
       "bytes": 27817,
@@ -24,19 +27,34 @@
       "sha256": "9e6117f54bfb505fa07ad2a2d270c6ad9941ebaa98a8c32530c7ee54f765a0b7"
     },
     {
-      "file": "web-app/public/assets/INNOVA-Musculoskeletal-Rig.glb",
-      "bytes": 42464612,
-      "sha256": "4213a45fafc3ea614afbc3481118fdf03d154b9f0af7c6887b6f18a76a6ccfc9"
-    },
-    {
       "file": "web-app/public/vendor/mediapipe/LICENSE",
       "bytes": 12331,
       "sha256": "8707eef0533987efc5b155d64761eeb6e20793f50b9bd1a68dad1cf4719d0ed8"
     },
     {
+      "file": "web-app/public/vendor/mediapipe/face_landmarker.task",
+      "bytes": 3758596,
+      "sha256": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff"
+    },
+    {
+      "file": "web-app/public/vendor/mediapipe/hand_landmarker.task",
+      "bytes": 7819105,
+      "sha256": "fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1"
+    },
+    {
       "file": "web-app/public/vendor/mediapipe/package.json",
       "bytes": 1026,
       "sha256": "8a1a3ac021e8b558a4f204fb69ec4b8a8926ae57e4b9807e2fa9c7545232a232"
+    },
+    {
+      "file": "web-app/public/vendor/mediapipe/pose_landmarker_full.task",
+      "bytes": 9398198,
+      "sha256": "5134a3aad27a58b93da0088d431f366da362b44e3ccfbe3462b3827a839011b1"
+    },
+    {
+      "file": "web-app/public/vendor/mediapipe/pose_landmarker_heavy.task",
+      "bytes": 30664242,
+      "sha256": "64437af838a65d18e5ba7a0d39b465540069bc8aae8308de3e318aad31fcbc7b"
     },
     {
       "file": "web-app/public/vendor/mediapipe/pose_landmarker_lite.task",
@@ -103,5 +121,13 @@
       "bytes": 93713712,
       "sha256": "8a60a8e441a0a85cfef7eec0478a907bdef1a10a2fc4c7a7ef0f88b196ac61de"
     }
-  ]
+  ],
+  "tracking_models": {
+    "pose_landmarker_lite.task": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+    "pose_landmarker_full.task": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",
+    "pose_landmarker_heavy.task": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task",
+    "hand_landmarker.task": "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+    "face_landmarker.task": "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+  },
+  "tracking_models_bundled": true
 }
