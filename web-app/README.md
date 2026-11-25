@@ -13,7 +13,7 @@ The default URL is http://127.0.0.1:4185/. Set MSK_PORT before starting to use a
 
 All application files are in public/. To host a browser edition later, deploy that directory on an HTTPS static host. The local-only server, launcher, tests and runtime should not be uploaded as public website files. The current prototype has not been deployed.
 
-The production app never requests the microphone, records video, or uploads camera frames. MediaPipe inference runs in a local module worker using the CPU backend. Preparation has been checked in the browser; frame processing has been tested using Google's public pose test image. The real Bose VB1 and ARHT capsule workflow remains to be tested with hardware.
+The production app never requests the microphone, records video, or uploads camera frames. MediaPipe inference runs in local module workers. Auto mode tries the GPU and moves to the CPU if a GPU frame stalls or fails; choose CPU only in the Camera and tracking panel to skip the GPU entirely. Preparation has been checked in the browser; frame processing has been tested using Google's public pose test image. The real Bose VB1 and ARHT capsule workflow remains to be tested with hardware.
 
 The developer-only public/qa/pose-check.html page runs a local inference check on a public Google sample. It is omitted from the portable package. Its fixture source is https://storage.googleapis.com/mediapipe-assets/pose.jpg and its use follows the upstream MediaPipe pose tests. It contains no user camera data.
 

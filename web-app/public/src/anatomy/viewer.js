@@ -1,11 +1,14 @@
 import * as THREE from '../../vendor/three/three.module.js';
 import { OrbitControls } from '../../vendor/three/OrbitControls.js';
 import { GLTFLoader } from '../../vendor/three/GLTFLoader.js';
+import { applySkinMode } from './skin-modes.js';
+
+const JAW_PARTS=/^(mandible bone|lower (medial incisor|lateral incisor|canine|first premolar|second premolar|first molar tooth|second molar tooth))/i;
 
 export class AnatomyViewer extends EventTarget {
   constructor(canvas,container) {
     super();this.canvas=canvas;this.container=container;this.parts=[];this.bones=new Map();this.rest=new Map();
-    this.layer='combined';this.originalOnly=false;this.playing=false;this.speed=1;this.autoRotate=false;this.selected=null;this.live=false;this.highlights=new Map();this.ghosted=new Set();
+    this.layer='combined';this.originalOnly=false;this.skinMode='smooth';this.playing=false;this.speed=1;this.autoRotate=false;this.selected=null;this.live=false;this.highlights=new Map();this.ghosted=new Set();
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#ffffff');
     this.camera=new THREE.OrthographicCamera(-1,1,1,-1,.01,100);this.camera.position.set(0,.88,4);
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
@@ -50,10 +53,40 @@ export class AnatomyViewer extends EventTarget {
         this.parts.push(object);
       }
     });
+    this.jaw=this.addJaw();
     this.mixer=new THREE.AnimationMixer(this.model);this.clips=gltf.animations;
     this.fullBounds=this.computeBounds(this.parts);this.frameBounds=this.fullBounds.clone();this.fit(false);
     this.dispatchEvent(new CustomEvent('loaded',{detail:{parts:this.parts,clips:this.clips,bones:this.bones}}));
     return this;
+  }
+  /** Gives the mandible and lower teeth their own bone, hinged at the temporomandibular joints, so face tracking can open the jaw. */
+  addJaw(){
+    const head=this.bones.get('head');if(!head||this.bones.has('jaw'))return this.bones.get('jaw')||null;
+    const meshes=this.parts.filter(p=>p.isSkinnedMesh&&JAW_PARTS.test(String(p.userData.anatomy_name||'')));
+    const mandible=meshes.find(m=>/^mandible/i.test(m.userData.anatomy_name));if(!mandible)return null;
+    this.model.updateMatrixWorld(true);
+    const position=mandible.geometry.attributes.position,point=new THREE.Vector3(),box=new THREE.Box3(),points=[];
+    for(let i=0;i<position.count;i++){point.fromBufferAttribute(position,i).applyMatrix4(mandible.matrixWorld);box.expandByPoint(point);points.push(point.clone());}
+    const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+    const condyles=points.filter(p=>p.y>box.max.y-size.y*.18&&p.z<center.z);
+    const pivot=(condyles.length?condyles.reduce((sum,p)=>sum.add(p),new THREE.Vector3()).divideScalar(condyles.length):center).setX(center.x);
+    const jaw=new THREE.Bone();jaw.name='jaw';head.add(jaw);jaw.position.copy(head.worldToLocal(pivot.clone()));jaw.updateMatrixWorld(true);
+    const inverse=jaw.matrixWorld.clone().invert();
+    for(const mesh of meshes){
+      const bones=[...mesh.skeleton.bones,jaw],inverses=[...mesh.skeleton.boneInverses.map(m=>m.clone()),inverse.clone()];
+      mesh.bind(new THREE.Skeleton(bones,inverses),mesh.bindMatrix);
+      const index=bones.length-1,skinIndex=mesh.geometry.attributes.skinIndex,skinWeight=mesh.geometry.attributes.skinWeight;
+      for(let v=0;v<skinIndex.count;v++){skinIndex.setXYZW(v,index,0,0,0);skinWeight.setXYZW(v,1,0,0,0);}
+      skinIndex.needsUpdate=true;skinWeight.needsUpdate=true;
+    }
+    this.bones.set('jaw',jaw);
+    this.rest.set('jaw',{position:jaw.position.clone(),quaternion:jaw.quaternion.clone(),scale:jaw.scale.clone(),world:jaw.getWorldQuaternion(new THREE.Quaternion())});
+    this.jawPivot=pivot;return jaw;
+  }
+  /** 'smooth' | 'segmented' | 'stitched' (see skin-modes.js). Applies to demonstrations and live tracking alike. */
+  setSkinMode(mode){
+    this.skinMode=mode;const changed=applySkinMode(this.parts.filter(p=>p.isSkinnedMesh&&p.userData.tissue==='muscles'),mode);
+    this.dispatchEvent(new CustomEvent('skinmode',{detail:{mode,changed}}));return changed;
   }
   materials(mesh){return Array.isArray(mesh.material)?mesh.material:[mesh.material];}
   computeBounds(parts){
@@ -202,6 +235,7 @@ export class AnatomyViewer extends EventTarget {
       this.controls.target.lerpVectors(v.fromTarget,v.toTarget,s);this.camera.position.lerpVectors(v.fromPosition,v.toPosition,s);
       this.camera.zoom=THREE.MathUtils.lerp(v.fromZoom,v.toZoom,s);this.camera.updateProjectionMatrix();if(t===1)this.tween=null;
     }
+    this.dispatchEvent(new CustomEvent('beforerender',{detail:{dt}}));
     this.controls.autoRotate=this.autoRotate&&!this.live;this.controls.update();this.renderer.render(this.scene,this.camera);
     this.dispatchEvent(new CustomEvent('frame',{detail:{time:this.action?.time||0,duration:this.currentClip?.duration||2,dt}}));
   };
