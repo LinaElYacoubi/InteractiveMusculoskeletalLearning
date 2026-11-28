@@ -272,3 +272,16 @@ test('knee camera practice calibrates and drives only the right thigh and shin',
   assert.deepEqual(retargeters[0].segments,['thigh.R','shin.R']);assert.deepEqual(viewer.direction,kneeLesson.view);
   lesson.exit();assert.equal(listenerTotal(ctx),0);
 });
+
+test('live feedback reports the bend through its own event and resets when tracking stops',async()=>{
+  const ctx=setup({names:allNames}),{viewer,pose,lesson,tick}=ctx,events=[];
+  lesson.addEventListener('feedback',({detail})=>events.push(detail));
+  lesson.enter();lesson.goTo('try');await lesson.startCamera();
+  assert.equal(lesson.state.feedback,null,'no feedback before the starting position is captured');
+  pose.emit(true);lesson.captureStart();
+  assert.deepEqual(lesson.state.feedback,{flexion:null,best:null,tip:false});
+  for(let i=0;i<5;i++){tick(80);pose.emit(true);viewer.frame();}
+  assert.ok(events.length>0,'angle updates use the feedback event');
+  assert.equal(typeof lesson.state.feedback.flexion,'number');
+  lesson.exit();assert.equal(lesson.state.feedback,null);
+});

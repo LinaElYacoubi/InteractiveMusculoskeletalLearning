@@ -31,6 +31,14 @@ export const elbowLesson = {
   // Right-side oblique: shows the anterior arm and the forearm's forward flexion arc in one view.
   // The model faces +Z and its right side is at -X.
   view:[-.9,.15,.42],
+  // Live feedback during "Try it yourself" (estimates for practice, not clinical measurement; thresholds await review).
+  // joint: landmarks [a, b, c]; the displayed bend is 180° minus the angle at b.
+  // form: the tip appears when the segment's direction is more than maxDeg away from the reference direction.
+  feedback:{
+    joint:[12,14,16],                                         // right shoulder, elbow, wrist
+    form:{segment:[12,14], reference:[12,24], maxDeg:35},     // upper arm vs. shoulder→hip line
+    displayMax:150,
+  },
 
   notice:{
     en:'Educational prototype — content awaiting Kinesiology review.',
@@ -172,6 +180,10 @@ export const elbowLesson = {
     demoLabel:{en:'Demonstration · scripted animation', fr:'Démonstration · animation préenregistrée'},
     liveLabel:{en:'Live · your estimated movement', fr:'En direct · votre mouvement estimé'},
     limbLabel:{en:'Use your RIGHT arm. The arm that stands out on the model is its right arm.', fr:'Utilisez votre bras DROIT. Le bras mis en évidence sur le modèle est son bras droit.'},
+    angleLabel:{en:'Your elbow bend (estimate)', fr:'Flexion de votre coude (estimation)'},
+    bestLabel:{en:'Best so far: {n}°', fr:'Maximum atteint : {n}°'},
+    angleNote:{en:'Estimated from the camera to help you practise. It is not a clinical measurement.', fr:'Estimation faite par la caméra pour vous aider à pratiquer. Ce n’est pas une mesure clinique.'},
+    formTip:{en:'Try to keep your upper arm by your side and let only your forearm move.', fr:'Essayez de garder le bras le long du corps et de ne bouger que l’avant-bras.'},
     previewNote:{en:'The preview works like a mirror. Video stays on this computer; nothing is recorded.', fr:'L’aperçu fonctionne comme un miroir. La vidéo reste sur cet ordinateur; rien n’est enregistré.'},
     startCamera:{en:'Start camera', fr:'Démarrer la caméra'},
     useDemo:{en:'Use the demonstration instead', fr:'Utiliser plutôt la démonstration'},

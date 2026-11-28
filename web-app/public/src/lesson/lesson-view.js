@@ -32,6 +32,7 @@ export class LessonView {
       if(event.target===sourcesDialog||event.target.closest('[data-action="closeSources"]'))sourcesDialog.close();
     });
     controller.addEventListener('change',({detail})=>this.render(detail));
+    controller.addEventListener('feedback',({detail})=>this.updateFeedback(detail));
     this.render(controller.state);
   }
   get content(){return this.controller.content;}
@@ -115,7 +116,7 @@ export class LessonView {
       h('span',{className:'eyebrow lesson-label',text:this.ui('startPositionLabel')}),this.claim('startPosition'),
       h('span',{className:'eyebrow lesson-label',text:this.ui('movementLabel')}),this.claim('movement'),
     ];
-    if(s==='tracking')body.push(this.chip(this.ui('liveLabel'),true));
+    if(s==='tracking'){body.push(this.chip(this.ui('liveLabel'),true));if(state.feedback)body.push(this.meter(state.feedback));}
     if(s==='demo')body.push(this.chip(this.ui('demoLabel')));
     body.push(h('p',{className:'lesson-status'+(['denied','noCamera','cameraError','trackingError','cameraStopped','lost','notVisible'].includes(key)?' warn':''),role:'status',text:this.tx(status[key])}));
     if(CAMERA_STATES.includes(s))body.push(h('p',{className:'lesson-fine',text:this.ui('previewNote')}));
@@ -157,6 +158,28 @@ export class LessonView {
       else actions=[this.button('tryAnother',this.ui('tryAnother'))];
     }
     return {body,actions};
+  }
+
+  // ---- live feedback (try step) ----------------------------------------------------------------
+  // Built once per render, then updated in place by updateFeedback() so the panel is not rebuilt
+  // many times a second.
+  meter(feedback){
+    const box=h('section',{className:'lesson-meter','aria-label':this.ui('angleLabel')},
+      h('span',{className:'eyebrow lesson-label',text:this.ui('angleLabel')}),
+      h('div',{className:'lesson-meter-row'},h('strong',{dataset:{fb:'now'}}),h('span',{dataset:{fb:'best'}})),
+      h('div',{className:'lesson-meter-bar','aria-hidden':'true'},h('i',{dataset:{fb:'fill'}}),h('b',{dataset:{fb:'mark'}})),
+      h('p',{className:'lesson-status warn',role:'status',dataset:{fb:'tip'},text:this.ui('formTip')}),
+      h('p',{className:'lesson-fine',text:this.ui('angleNote')}));
+    this.fillFeedback(box,feedback);
+    return box;
+  }
+  updateFeedback(feedback){const box=this.el.content.querySelector('.lesson-meter');if(box)this.fillFeedback(box,feedback);}
+  fillFeedback(box,{flexion,best,tip}){
+    const max=this.content.feedback?.displayMax||150,pct=v=>`${Math.min(100,Math.max(0,(v??0)/max*100))}%`,part=name=>box.querySelector(`[data-fb="${name}"]`);
+    part('now').textContent=flexion===null?'—':`${flexion}°`;
+    part('best').textContent=best===null?'':format(this.ui('bestLabel'),{n:best});
+    part('fill').style.width=pct(flexion);part('mark').style.left=pct(best);part('mark').hidden=best===null;
+    part('tip').hidden=!tip;
   }
 
   // ---- camera preview hand-over --------------------------------------------------------------

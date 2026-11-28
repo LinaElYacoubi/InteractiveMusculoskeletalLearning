@@ -7,6 +7,7 @@
 //   removes them, so repeated retries cannot stack listeners.
 // - The viewer's single render loop is reused; the lesson never starts another.
 import {resolveHighlights} from './highlight.js';
+import {MovementFeedback} from './feedback.js';
 import {LANGUAGES} from './lesson-content.js';
 import {landmark} from '../motion/pose-math.js';
 
@@ -35,7 +36,8 @@ export class LessonController extends EventTarget {
       tryState:this.tryState,trackStatus:this.trackStatus,armVisible:this.armVisible,notice:this.notice,
       group:this.group,groupMissing:this.group?this.resolved.get(this.group)?.missing||[]:[],
       answer:this.answer,correct:option?Boolean(option.correct):null,attempts:this.attempts,
-      missingStructures:this.missingStructures,live:Boolean(this.tracking&&this.tryState==='tracking')};
+      missingStructures:this.missingStructures,live:Boolean(this.tracking&&this.tryState==='tracking'),
+      feedback:this.tracking?.feedback&&this.tryState==='tracking'?this.tracking.feedback.state:null};
   }
   emit(){this.dispatchEvent(new CustomEvent('change',{detail:this.state}));}
 
@@ -148,7 +150,8 @@ export class LessonController extends EventTarget {
   }
   beginTracking(){
     const abort=new AbortController(),signal=abort.signal;
-    this.tracking={abort,retargeter:this.createRetargeter(),lastPose:null,lastPoseAt:0,lastReliableAt:this.now(),lastApplyAt:0};
+    this.tracking={abort,retargeter:this.createRetargeter(),lastPose:null,lastPoseAt:0,lastReliableAt:this.now(),lastApplyAt:0,
+      feedback:this.content.feedback?new MovementFeedback(this.content.feedback,this.now):null};
     this.pose.addEventListener('pose',({detail})=>this.onPose(detail),{signal});
     this.pose.addEventListener('failure',()=>this.fail('trackingError'),{signal});
     this.camera.addEventListener('stopped',()=>this.fail('cameraStopped'),{signal});
@@ -166,6 +169,10 @@ export class LessonController extends EventTarget {
       tracking.retargeter.apply(detail.worldLandmarks,this.content.mirrorTracking,Math.min(.2,(now-tracking.lastApplyAt)/1000||.08));
       tracking.lastApplyAt=now;tracking.lastReliableAt=now;
       if(this.trackStatus!=='ok'){this.trackStatus='ok';changed=true;}
+      // Angle updates arrive many times a second, so they get their own lightweight event;
+      // a full 'change' (panel re-render) only happens when something else changed.
+      if(tracking.feedback?.update(detail.worldLandmarks,this.content.mirrorTracking)&&!changed)
+        this.dispatchEvent(new CustomEvent('feedback',{detail:tracking.feedback.state}));
     }
     if(changed)this.emit();
   }
@@ -187,7 +194,7 @@ export class LessonController extends EventTarget {
     catch{this.notice='notVisible';this.emit();return false;}
     const viewer=this.viewer;
     viewer.setPlaying(false);viewer.startLive();viewer.lookFrom(this.viewDirection);viewer.frameParts(this.lessonParts(),{padding:2.1});
-    tracking.lastReliableAt=this.now();this.tryState='tracking';this.trackStatus='ok';this.notice=null;this.emit();
+    tracking.feedback?.reset();tracking.lastReliableAt=this.now();this.tryState='tracking';this.trackStatus='ok';this.notice=null;this.emit();
     return true;
   }
   fail(kind){

@@ -32,6 +32,15 @@ The same rules as the elbow lesson:
 - Highlights are static and labelled "Proposed highlight, not yet reviewed. It shows where these structures are, not how active your muscles are."
 - The camera looks at the right leg from the side and slightly behind, so the hamstrings and the heel's arc are both visible.
 
+## Live practice feedback (proposed, not yet reviewed)
+
+During "Try it yourself", once the visitor has captured their starting position, the panel shows:
+
+- **Your knee bend (estimate):** 180° minus the camera-estimated angle at the right knee (hip–knee–ankle), smoothed, with a bar and a "Best so far" mark. Labelled "Estimated from the camera to help you practise. It is not a clinical measurement."
+- **Form tip:** "Try to keep your right thigh pointing down, knees side by side, and let only your lower leg move." It appears when the thigh (hip→knee) is more than **30°** away from the shoulder→hip line for 0.4 s, and clears once it is back under 22° for 0.4 s. Lifting the knee forward (hip flexion) is the compensation it looks for.
+
+Questions for the expert: Is 30° the right limit? Should "Best so far" be shown at all, given it might encourage visitors to push past what is comfortable?
+
 ## Learning question
 
 **Question:** Standing on your left leg, you bend your right knee to bring your heel toward your buttock. Which muscles shorten to lift your lower leg?

@@ -26,6 +26,15 @@ All sources are sections of *Anatomy and Physiology 2e* (Betts JG et al., OpenSt
 - In "Understand", the visitor picks one group at a time (flexors, extensors or bones). The chosen group is tinted and the rest of the body fades, except the elbow structures listed above.
 - Highlights are static. They do not depend on demonstration phase, elbow angle, movement direction or the visitor's tracked motion. Each one is labelled "Proposed highlight, not yet reviewed. It shows where these structures are, not how active your muscles are."
 
+## Live practice feedback (proposed, not yet reviewed)
+
+During "Try it yourself", once the visitor has captured their starting position, the panel shows:
+
+- **Your elbow bend (estimate):** 180° minus the camera-estimated angle at the right elbow (shoulder–elbow–wrist), smoothed, with a bar and a "Best so far" mark. Labelled "Estimated from the camera to help you practise. It is not a clinical measurement."
+- **Form tip:** "Try to keep your upper arm by your side and let only your forearm move." It appears when the upper arm (shoulder→elbow) is more than **35°** away from the shoulder→hip line for 0.4 s, and clears once it is back under 27° for 0.4 s.
+
+Questions for the expert: Is 35° a sensible limit, or should a little shoulder movement be allowed without a tip? Is showing a number in degrees helpful for the public, or would a simple bar be better?
+
 ## Learning question
 
 **Question:** Standing with your upper arm by your side, you lift your hand toward your shoulder. Which muscles shorten to raise your forearm?

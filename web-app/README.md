@@ -40,7 +40,8 @@ Launch the server as shown above, open http://127.0.0.1:4185/ and wait for the m
   - highlight.js: exact mesh matching with no substitution
   - lesson-content.js: translation lookup and the content validator
 - **Tests:** tests/lesson.test.mjs checks step transitions, restart/exit cleanup, camera refusal and loss, listener cleanup, language switching, the question, content completeness, and that every highlight name exists in the real GLB.
-- **Adding a lesson:** copy a lesson file, keep the same `ui` keys (a test checks this), set `clip`, `trackedSegments`, `trackedLandmarks`, `view` and `trackedGroup`, then add it to the `lessons` list in public/src/app.js. The introduction shows a picker when there is more than one lesson.
+- **Live feedback:** public/src/lesson/feedback.js turns tracker landmarks into the visitor's estimated joint bend, best bend and a form tip, using each lesson's `feedback` block (joint landmarks, the segment that should stay still, and its limit in degrees). tests/feedback.test.mjs checks it.
+- **Adding a lesson:** copy a lesson file, keep the same `ui` keys (a test checks this), set `clip`, `trackedSegments`, `trackedLandmarks`, `view`, `feedback` and `trackedGroup`, then add it to the `lessons` list in public/src/app.js. The introduction shows a picker when there is more than one lesson.
 - **Review:** docs/elbow-lesson-expert-review.md and docs/knee-lesson-expert-review.md are the review sheets for the Kinesiology expert. Everything is marked pending review.
 
 See ARCHITECTURE.md for module responsibilities and the main project README for limitations and the teaching workflow.

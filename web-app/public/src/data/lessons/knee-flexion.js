@@ -29,6 +29,14 @@ export const kneeLesson = {
   // Right side, slightly from behind: shows the hamstrings and the heel's backward arc in one view.
   // The model faces +Z and its right side is at -X.
   view:[-.9,.12,-.45],
+  // Live feedback during "Try it yourself" (estimates for practice, not clinical measurement; thresholds await review).
+  // joint: landmarks [a, b, c]; the displayed bend is 180° minus the angle at b.
+  // form: the tip appears when the segment's direction is more than maxDeg away from the reference direction.
+  feedback:{
+    joint:[24,26,28],                                         // right hip, knee, ankle
+    form:{segment:[24,26], reference:[12,24], maxDeg:30},     // thigh vs. shoulder→hip line
+    displayMax:140,
+  },
 
   notice:{
     en:'Educational prototype — content awaiting Kinesiology review.',
@@ -181,6 +189,10 @@ export const kneeLesson = {
     demoLabel:{en:'Demonstration · scripted animation', fr:'Démonstration · animation préenregistrée'},
     liveLabel:{en:'Live · your estimated movement', fr:'En direct · votre mouvement estimé'},
     limbLabel:{en:'Use your RIGHT leg. The leg that stands out on the model is its right leg.', fr:'Utilisez votre jambe DROITE. La jambe mise en évidence sur le modèle est sa jambe droite.'},
+    angleLabel:{en:'Your knee bend (estimate)', fr:'Flexion de votre genou (estimation)'},
+    bestLabel:{en:'Best so far: {n}°', fr:'Maximum atteint : {n}°'},
+    angleNote:{en:'Estimated from the camera to help you practise. It is not a clinical measurement.', fr:'Estimation faite par la caméra pour vous aider à pratiquer. Ce n’est pas une mesure clinique.'},
+    formTip:{en:'Try to keep your right thigh pointing down, knees side by side, and let only your lower leg move.', fr:'Essayez de garder la cuisse droite pointée vers le sol, les genoux côte à côte, et de ne bouger que la jambe.'},
     previewNote:{en:'The preview works like a mirror. Video stays on this computer; nothing is recorded.', fr:'L’aperçu fonctionne comme un miroir. La vidéo reste sur cet ordinateur; rien n’est enregistré.'},
     startCamera:{en:'Start camera', fr:'Démarrer la caméra'},
     useDemo:{en:'Use the demonstration instead', fr:'Utiliser plutôt la démonstration'},

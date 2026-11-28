@@ -116,3 +116,7 @@ body.display-mode .language-toggle button{font-size:clamp(13px,1.1vw,20px);paddi
 .tracking-options{border-top:1px solid var(--line);margin-top:4px;padding-top:15px}.tracking-options>.eyebrow{font-size:8px;color:#888}.tracking-options .switch-label.dark{margin-top:11px}
 .capture-metrics strong.small{font-size:13px;letter-spacing:0}
 @media(max-width:1250px){.skin-mode{font-size:0;gap:0}}
+.lesson-meter{display:grid;gap:7px;border:1px solid var(--line);border-radius:6px;padding:11px 12px;background:#fff}
+.lesson-meter-row{display:flex;align-items:baseline;gap:12px}.lesson-meter-row strong{font-size:calc(var(--fs) + 14px);color:var(--wine);font-variant-numeric:tabular-nums;min-width:3ch}.lesson-meter-row span{color:var(--muted)}
+.lesson-meter-bar{position:relative;height:8px;border-radius:4px;background:var(--soft,#eee)}.lesson-meter-bar i{position:absolute;inset:0 auto 0 0;border-radius:4px;background:var(--wine);transition:width .12s linear}.lesson-meter-bar b{position:absolute;top:-3px;width:2px;height:14px;background:var(--ink);transform:translateX(-1px)}
+.lesson-meter [hidden]{display:none}
