@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {elbowLesson} from '../public/src/data/lessons/elbow-flexion.js';
+import {kneeLesson} from '../public/src/data/lessons/knee-flexion.js';
 import {validateLessonContent,t,LANGUAGES} from '../public/src/lesson/lesson-content.js';
 import {resolveHighlightGroup} from '../public/src/lesson/highlight.js';
 import {LessonController,STEPS} from '../public/src/lesson/lesson-controller.js';
@@ -61,10 +62,10 @@ class FakePose extends Tracked {
   }
 }
 function fakeRetargeter(){return {calibrated:false,applied:0,eased:0,calibrate(points,mirror,segments){this.calibrated=true;this.mirror=mirror;this.segments=segments;},apply(){this.applied++;},invalidate(){this.calibrated=false;this.invalidated=true;},easeToRest(){this.eased++;}};}
-function setup({names,cameraActive=false}={}){
+function setup({names,cameraActive=false,lessons}={}){
   const viewer=new FakeViewer(names),camera=new FakeCamera(),pose=new FakePose(),retargeters=[];let clock=1000;
   if(cameraActive){camera.active=true;pose.ready=true;pose.running=true;}
-  const lesson=new LessonController({viewer,camera,pose,content:elbowLesson,now:()=>clock,createRetargeter:()=>{const r=fakeRetargeter();retargeters.push(r);return r;}});
+  const lesson=new LessonController({viewer,camera,pose,...(lessons?{lessons}:{content:elbowLesson}),now:()=>clock,createRetargeter:()=>{const r=fakeRetargeter();retargeters.push(r);return r;}});
   return {viewer,camera,pose,lesson,retargeters,tick:ms=>{clock+=ms;}};
 }
 const listenerTotal=({viewer,camera,pose})=>viewer.listeners+camera.listeners+pose.listeners;
@@ -215,4 +216,59 @@ test('the learning question gives feedback, allows another attempt and resets on
   lesson.choose('unknown');assert.equal(lesson.answer,null);
   lesson.choose('flexors');assert.equal(lesson.state.correct,true);assert.equal(lesson.attempts,2);
   lesson.restart();assert.equal(lesson.step,'intro');assert.equal(lesson.answer,null);assert.equal(lesson.attempts,0);
+});
+
+// ---- knee lesson and lesson switching --------------------------------------------------------
+const kneeNames=kneeLesson.highlightGroups.flatMap(group=>group.anatomyNames);
+const uiKeys=(value,path='')=>value&&typeof value==='object'&&!('en' in value)?Object.entries(value).flatMap(([k,v])=>uiKeys(v,`${path}.${k}`)):[path];
+
+test('knee lesson content is complete, sourced, pending review and matches the elbow lesson’s interface keys',()=>{
+  assert.deepEqual(validateLessonContent(kneeLesson),[]);
+  assert.equal(kneeLesson.review.status,'pending-review');
+  for(const claim of Object.values(kneeLesson.claims))assert.equal(claim.status,'pending-review');
+  assert.deepEqual(kneeLesson.notice,elbowLesson.notice);
+  assert.deepEqual(uiKeys(kneeLesson.ui).sort(),uiKeys(elbowLesson.ui).sort(),'the view renders both lessons from the same keys');
+  for(const lesson of [elbowLesson,kneeLesson]){
+    assert.ok(lesson.claims.lifting&&lesson.claims.direction,'the understand step shows the lifting and direction claims');
+    assert.ok(lesson.highlightGroups.some(group=>group.id===lesson.trackedGroup),'the tracked group exists');
+    assert.equal(lesson.view.length,3);
+  }
+  assert.notEqual(kneeLesson.id,elbowLesson.id);
+});
+test('every knee highlight name exists in the real GLB as original right-sided anatomy, with the knee clip',async()=>{
+  const file=await readFile(new URL('../public/assets/INNOVA-Musculoskeletal-Rig.glb',import.meta.url));
+  const data=JSON.parse(file.toString('utf8',20,20+file.readUInt32LE(12)));
+  const parts=data.nodes.filter(node=>node.extras?.anatomy_name).map(node=>({userData:node.extras}));
+  for(const group of kneeLesson.highlightGroups){
+    const {found,missing}=resolveHighlightGroup(parts,group,'R');
+    assert.deepEqual(missing,[],`${group.id} has names missing from the model`);
+    for(const item of found){assert.equal(item.userData.anatomical_side,'R');assert.equal(item.userData.provenance,'original');}
+  }
+  assert.ok(data.animations.some(animation=>animation.name===kneeLesson.clip));
+  const joints=new Set(data.skins[0].joints.map(index=>data.nodes[index].name));
+  for(const name of kneeLesson.trackedSegments)assert.ok(joints.has(name),`${name} is a rig bone`);
+});
+test('switching lessons restarts at the introduction with the new clip, view and highlights',async()=>{
+  const ctx=setup({names:[...allNames,...kneeNames],lessons:[elbowLesson,kneeLesson]}),{viewer,camera,lesson}=ctx;
+  assert.equal(lesson.content,elbowLesson,'the first lesson is shown by default');
+  lesson.enter();lesson.goTo('try');await lesson.startCamera();assert.equal(camera.active,true);
+  assert.equal(lesson.setLesson('nope'),false);assert.equal(lesson.content,elbowLesson);
+  assert.equal(lesson.setLesson('knee-flexion-right'),true);
+  assert.equal(lesson.state.lessonId,'knee-flexion-right');assert.deepEqual(lesson.state.lessonIds,['elbow-flexion-right','knee-flexion-right']);
+  assert.equal(lesson.step,'intro');assert.equal(camera.active,false,'the lesson-owned camera is released');assert.equal(listenerTotal(ctx),0);
+  assert.equal(viewer.currentClip.name,'Knee_Flexion_R');assert.deepEqual(viewer.direction,kneeLesson.view);
+  assert.equal(viewer.ghostKeep.length,kneeNames.length,'only the knee structures stay opaque');
+  lesson.goTo('understand');assert.equal(lesson.group,'flexors');assert.equal(viewer.highlighted.length,8);
+  lesson.exit();lesson.enter();assert.equal(lesson.content,kneeLesson,'the chosen lesson is kept between visits');
+});
+test('knee camera practice calibrates and drives only the right thigh and shin',async()=>{
+  const ctx=setup({names:kneeNames,lessons:[kneeLesson]}),{viewer,pose,lesson,retargeters}=ctx;
+  lesson.enter();lesson.goTo('try');await lesson.startCamera();
+  pose.emit(true);assert.equal(lesson.armVisible,false,'arm landmarks alone do not satisfy the knee lesson');
+  const points=Array.from({length:33},()=>({x:0,y:0,z:0,visibility:0,presence:0}));
+  for(const [i,y] of [[24,0],[26,.45],[28,.9]])points[i]={x:-.1,y,z:0,visibility:.99,presence:.99};
+  pose.dispatchEvent(new CustomEvent('pose',{detail:{landmarks:points,worldLandmarks:points,elapsed:20}}));
+  assert.equal(lesson.armVisible,true);assert.equal(lesson.captureStart(),true);
+  assert.deepEqual(retargeters[0].segments,['thigh.R','shin.R']);assert.deepEqual(viewer.direction,kneeLesson.view);
+  lesson.exit();assert.equal(listenerTotal(ctx),0);
 });

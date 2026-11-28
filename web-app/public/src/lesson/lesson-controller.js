@@ -2,7 +2,7 @@
 //
 // Ownership rules
 // - The lesson only stops a camera stream or pose loop that it started itself.
-// - Lesson tracking uses its own PoseRetargeter (arm-only calibration), never the Movement lab one.
+// - Lesson tracking uses its own PoseRetargeter (calibrated on the lesson's one limb only), never the Movement lab one.
 // - All lesson event listeners share one AbortController per tracking session; aborting it
 //   removes them, so repeated retries cannot stack listeners.
 // - The viewer's single render loop is reused; the lesson never starts another.
@@ -12,15 +12,17 @@ import {landmark} from '../motion/pose-math.js';
 
 export const STEPS=['intro','watch','try','understand','check'];
 export const TRY_STATES=['idle','requesting','preparing','position','tracking','demo','denied','noCamera','cameraError','trackingError','cameraStopped'];
-// Right-side oblique: shows the anterior arm and the forearm's forward flexion arc in one view.
+// Default camera direction when a lesson does not give its own `view` (the elbow's right-side oblique).
 // The model faces +Z and its right side is at -X.
 export const LESSON_VIEW=[-.9,.15,.42];
 const LOST_AFTER_MS=900,FRESH_POSE_MS=1000;
 
 export class LessonController extends EventTarget {
-  constructor({viewer,camera,pose,createRetargeter,content,cameraDeviceId=()=>'',now=()=>performance.now()}){
+  // `lessons` lists every available lesson; `content` (optional) is the one shown first.
+  constructor({viewer,camera,pose,createRetargeter,content,lessons=[content],cameraDeviceId=()=>'',now=()=>performance.now()}){
     super();
-    Object.assign(this,{viewer,camera,pose,createRetargeter,content,cameraDeviceId,now});
+    lessons=lessons.filter(Boolean);
+    Object.assign(this,{viewer,camera,pose,createRetargeter,lessons,content:content||lessons[0],cameraDeviceId,now});
     this.active=false;this.lang='en';this.step='intro';this.session=0;this.tracking=null;this.ownership=null;
     this.resolved=new Map();this.saved=null;this.resetProgress();
   }
@@ -29,7 +31,7 @@ export class LessonController extends EventTarget {
   get missingStructures(){return [...this.resolved.values()].flatMap(group=>group.missing);}
   get state(){
     const option=this.content.question.options.find(item=>item.id===this.answer);
-    return {active:this.active,lang:this.lang,step:this.step,stepIndex:this.stepIndex,stepCount:STEPS.length,
+    return {active:this.active,lang:this.lang,lessonId:this.content.id,lessonIds:this.lessons.map(lesson=>lesson.id),step:this.step,stepIndex:this.stepIndex,stepCount:STEPS.length,
       tryState:this.tryState,trackStatus:this.trackStatus,armVisible:this.armVisible,notice:this.notice,
       group:this.group,groupMissing:this.group?this.resolved.get(this.group)?.missing||[]:[],
       answer:this.answer,correct:option?Boolean(option.correct):null,attempts:this.attempts,
@@ -57,6 +59,21 @@ export class LessonController extends EventTarget {
     this.active=false;this.step='intro';this.resetProgress();this.saved=null;
     this.emit();this.dispatchEvent(new Event('exit'));
   }
+  // Switches to another lesson. While active this leaves the current step (releasing any lesson-owned
+  // camera) and starts the new lesson from its introduction.
+  setLesson(id){
+    const next=this.lessons.find(lesson=>lesson.id===id);
+    if(!next)return false;
+    if(next===this.content)return true;
+    if(this.active)this.leaveStep(this.step);
+    this.content=next;
+    if(this.active){
+      this.resolved=resolveHighlights(this.viewer.parts,next.highlightGroups,next.side);
+      this.resetProgress();this.step='intro';this.enterStep('intro');
+    }
+    this.emit();
+    return true;
+  }
   setLanguage(lang){
     if(!LANGUAGES.includes(lang))return false;
     if(lang!==this.lang){this.lang=lang;this.emit();}
@@ -80,20 +97,21 @@ export class LessonController extends EventTarget {
     this.viewer.select(null);this.notice=null;
     if(step==='intro')this.stageDemo({play:false});
     if(step==='watch')this.stageDemo({play:true});
-    if(step==='try'){this.tryState='idle';this.trackStatus=null;this.armVisible=false;this.stageDemo({play:false});this.highlight(this.content.trackedArmGroup);}
+    if(step==='try'){this.tryState='idle';this.trackStatus=null;this.armVisible=false;this.stageDemo({play:false});this.highlight(this.content.trackedGroup);}
     if(step==='understand'){this.stageDemo({play:false,at:.5});this.showGroup(this.content.highlightGroups[0].id,false);}
     if(step==='check'){this.answer=null;this.stageDemo({play:false});}
   }
-  // Scripted demonstration, framed on the right arm (including the clip's peak flexion).
+  get viewDirection(){return this.content.view||LESSON_VIEW;}
+  // Scripted demonstration, framed on the lesson's structures (including the clip's peak flexion).
   stageDemo({play,at=0}){
     const viewer=this.viewer;
     if(viewer.live)viewer.stopLive();
     viewer.setLayer('combined',false);viewer.speed=.5;viewer.setClip(this.content.clip);
     if(at)viewer.seek(at);
-    viewer.setGhost(this.armParts());viewer.lookFrom(LESSON_VIEW);viewer.frameParts(this.armParts(),{includeClipPeak:true});
+    viewer.setGhost(this.lessonParts());viewer.lookFrom(this.viewDirection);viewer.frameParts(this.lessonParts(),{includeClipPeak:true});
     viewer.setPlaying(play);
   }
-  armParts(){return [...this.resolved.values()].flatMap(group=>group.found);}
+  lessonParts(){return [...this.resolved.values()].flatMap(group=>group.found);}
   highlight(groupId){
     const group=this.content.highlightGroups.find(item=>item.id===groupId),resolved=this.resolved.get(groupId);
     if(!group||!resolved)return;
@@ -159,7 +177,7 @@ export class LessonController extends EventTarget {
       if(this.trackStatus!=='lost'){this.trackStatus='lost';this.emit();}
     }
   }
-  // Captures the visitor's relaxed starting position as the arm's neutral reference.
+  // Captures the visitor's relaxed starting position as the tracked limb's neutral reference.
   captureStart(){
     const tracking=this.tracking;
     if(!tracking||this.tryState!=='position')return false;
@@ -168,7 +186,7 @@ export class LessonController extends EventTarget {
     try{tracking.retargeter.calibrate(tracking.lastPose.worldLandmarks,this.content.mirrorTracking,this.content.trackedSegments);}
     catch{this.notice='notVisible';this.emit();return false;}
     const viewer=this.viewer;
-    viewer.setPlaying(false);viewer.startLive();viewer.lookFrom(LESSON_VIEW);viewer.frameParts(this.armParts(),{padding:2.1});
+    viewer.setPlaying(false);viewer.startLive();viewer.lookFrom(this.viewDirection);viewer.frameParts(this.lessonParts(),{padding:2.1});
     tracking.lastReliableAt=this.now();this.tryState='tracking';this.trackStatus='ok';this.notice=null;this.emit();
     return true;
   }
@@ -179,7 +197,7 @@ export class LessonController extends EventTarget {
   useDemonstration(){
     if(!this.active||this.step!=='try')return;
     this.session++;this.stopTracking();this.releaseDevices();
-    this.tryState='demo';this.notice=null;this.stageDemo({play:true});this.highlight(this.content.trackedArmGroup);this.emit();
+    this.tryState='demo';this.notice=null;this.stageDemo({play:true});this.highlight(this.content.trackedGroup);this.emit();
   }
   readyToContinue(){
     if(this.step==='try'&&['tracking','demo','position'].includes(this.tryState))this.next();

@@ -9,6 +9,7 @@ import {project} from './motion/overlap.js';
 import {LessonController} from './lesson/lesson-controller.js';
 import {LessonView} from './lesson/lesson-view.js';
 import {elbowLesson} from './data/lessons/elbow-flexion.js';
+import {kneeLesson} from './data/lessons/knee-flexion.js';
 import {t,getLanguage,setLanguage,onLanguageChange,initialLanguage,translateDocument} from './i18n/i18n.js';
 
 const $=id=>document.getElementById(id);
@@ -178,9 +179,9 @@ function applyLanguage(lang){
 document.querySelectorAll('[data-language]').forEach(button=>button.addEventListener('click',()=>setLanguage(button.dataset.language)));
 
 function createLesson(){
-  lesson=new LessonController({viewer,camera,pose,content:elbowLesson,createRetargeter:()=>new PoseRetargeter(viewer),cameraDeviceId:()=>$('cameraSelect').value});
+  lesson=new LessonController({viewer,camera,pose,lessons:[elbowLesson,kneeLesson],createRetargeter:()=>new PoseRetargeter(viewer),cameraDeviceId:()=>$('cameraSelect').value});
   lesson.setLanguage(getLanguage());
-  new LessonView({controller:lesson,content:elbowLesson,panel:$('lessonPanel'),sourcesDialog:$('lessonSources'),cameraPreview:$('cameraPreview')});
+  new LessonView({controller:lesson,panel:$('lessonPanel'),sourcesDialog:$('lessonSources'),cameraPreview:$('cameraPreview')});
   lesson.addEventListener('change',updateMode);
   lesson.addEventListener('exit',()=>{
     document.querySelectorAll('[data-view]').forEach(button=>button.classList.toggle('selected',button.dataset.view==='front'));

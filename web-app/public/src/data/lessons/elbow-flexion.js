@@ -28,6 +28,9 @@ export const elbowLesson = {
   mirrorTracking:false,
   trackedSegments:['upper_arm.R','forearm.R'],
   trackedLandmarks:[12,14,16], // MediaPipe: right shoulder, right elbow, right wrist (subject's own right)
+  // Right-side oblique: shows the anterior arm and the forearm's forward flexion arc in one view.
+  // The model faces +Z and its right side is at -X.
+  view:[-.9,.15,.42],
 
   notice:{
     en:'Educational prototype — content awaiting Kinesiology review.',
@@ -109,7 +112,7 @@ export const elbowLesson = {
       ]},
   ],
   // During "Try it yourself" the bones of the tracked arm are tinted only to identify the arm.
-  trackedArmGroup:'bones',
+  trackedGroup:'bones',
 
   question:{
     status:REVIEW.PENDING, sources:['os-10-4','os-11-5','os-9-5'],
@@ -136,6 +139,8 @@ export const elbowLesson = {
   // Interface text (not educational claims, so no sources required).
   ui:{
     tab:{en:'Learn a movement', fr:'Apprendre un mouvement'},
+    shortName:{en:'Elbow', fr:'Coude'},
+    chooseLesson:{en:'Choose a movement', fr:'Choisir un mouvement'},
     stepNames:{
       intro:{en:'Introduction', fr:'Introduction'},
       watch:{en:'Watch the movement', fr:'Observer le mouvement'},
@@ -166,7 +171,7 @@ export const elbowLesson = {
       fr:'Observez le coude droit du modèle se plier et se tendre. Il s’agit d’une démonstration préenregistrée, pas de votre mouvement.'},
     demoLabel:{en:'Demonstration · scripted animation', fr:'Démonstration · animation préenregistrée'},
     liveLabel:{en:'Live · your estimated movement', fr:'En direct · votre mouvement estimé'},
-    armLabel:{en:'Use your RIGHT arm. The arm that stands out on the model is its right arm.', fr:'Utilisez votre bras DROIT. Le bras mis en évidence sur le modèle est son bras droit.'},
+    limbLabel:{en:'Use your RIGHT arm. The arm that stands out on the model is its right arm.', fr:'Utilisez votre bras DROIT. Le bras mis en évidence sur le modèle est son bras droit.'},
     previewNote:{en:'The preview works like a mirror. Video stays on this computer; nothing is recorded.', fr:'L’aperçu fonctionne comme un miroir. La vidéo reste sur cet ordinateur; rien n’est enregistré.'},
     startCamera:{en:'Start camera', fr:'Démarrer la caméra'},
     useDemo:{en:'Use the demonstration instead', fr:'Utiliser plutôt la démonstration'},

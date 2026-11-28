@@ -16,7 +16,7 @@ The application uses ES modules and a small Node static server. There is no buil
 | Rig retargeting | public/src/motion/retarget.js | Calibrate, ingest and update lifecycle; parent-first local targets; per-frame easing and rest recovery |
 | Skinning modes | public/src/anatomy/skin-modes.js | Smooth, segmented and seamless segmented muscle weights, switchable at runtime |
 | Teaching content | public/src/data/knowledge.js | Original source names, reviewed-later group context and explicit content gaps |
-| Lesson content | public/src/data/lessons/elbow-flexion.js | Bilingual draft text, sources, claim→source links, highlight rules by exact `anatomy_name`, review status |
+| Lesson content | public/src/data/lessons/elbow-flexion.js, knee-flexion.js | Bilingual draft text, sources, claim→source links, highlight rules by exact `anatomy_name`, review status |
 | Guided lesson | public/src/lesson/ | DOM-free step controller (camera/tracking ownership, cleanup), exact highlight resolution, content validation, panel view |
 | Narration | public/src/ui/speech.js | Local device voices, rate selection, start/cancel lifecycle |
 | UI coordination | public/src/app.js | DOM events, inspector state, playback, calibration and tracked/demo modes |
@@ -35,7 +35,7 @@ The renderer and inference run independently. Rendering size follows the actual 
 
 ## Guided lesson integration
 
-The lesson reuses the single viewer render loop, the shared CameraInput and PoseDetection instances, and the existing elbow clip. It keeps its own PoseRetargeter, calibrated on `upper_arm.R` and `forearm.R` only through the optional `segments` argument. Movement lab's default full-body calibration is unchanged. With the upgraded tracker, bones outside the segment list stay at rest, a low-confidence opposite shoulder is accepted, and the lesson uses whatever tracking settings are selected in the Movement lab panel (it prepares the shared PoseDetection with them). Entering the lesson pauses Movement lab live anatomy. On exit the lesson restores the saved layer, coverage, clip, speed and rotation, fits the body and clears highlights and fading.
+The lesson reuses the single viewer render loop, the shared CameraInput and PoseDetection instances, and the existing `Elbow_Flexion_R` and `Knee_Flexion_R` clips. It keeps its own PoseRetargeter, calibrated only on the lesson's `trackedSegments` (`upper_arm.R` and `forearm.R`, or `thigh.R` and `shin.R`) through the optional `segments` argument. Choosing another lesson leaves the current step first, so any lesson-owned camera is released. Movement lab's default full-body calibration is unchanged. With the upgraded tracker, bones outside the segment list stay at rest, a low-confidence opposite shoulder is accepted, and the lesson uses whatever tracking settings are selected in the Movement lab panel (it prepares the shared PoseDetection with them). Entering the lesson pauses Movement lab live anatomy. On exit the lesson restores the saved layer, coverage, clip, speed and rotation, fits the body and clears highlights and fading.
 
 The controller records whether it started the camera and pose loop and releases only what it started. All of its listeners share one AbortController per tracking session. A pending camera request is cancelled through CameraInput's generation check. The viewer adds `setHighlight`/`clearHighlight` (which stack under selection), `setGhost`/`clearGhost`, `lookFrom` and `frameParts`.
 

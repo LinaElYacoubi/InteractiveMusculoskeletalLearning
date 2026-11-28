@@ -55,6 +55,7 @@ body.display-mode{--header:clamp(100px,7vh,170px);--rail:clamp(190px,18vw,330px)
 .lesson-group{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:20px;padding:8px 12px;font-size:calc(var(--fs) - 1px)}
 .lesson-group i{width:9px;height:9px;border-radius:50%;background:var(--group)}
 .lesson-group[aria-pressed=true]{border-color:var(--group);box-shadow:inset 0 0 0 1px var(--group);font-weight:600}
+.lesson-picker{margin-bottom:4px}.lesson-picker .lesson-group{--group:var(--wine)}
 .lesson-structures{margin:0;padding:0 0 0 12px;border-left:3px solid var(--group);list-style:none;display:grid;gap:4px;font-size:var(--fs)}
 .lesson-disclaimer{font-size:calc(var(--fs) - 3px);color:#888!important}
 .lesson-box{background:var(--soft);border:1px solid #ededeb;border-radius:5px;padding:12px 13px}

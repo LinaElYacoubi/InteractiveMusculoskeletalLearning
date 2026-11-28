@@ -18,8 +18,9 @@ function h(tag,props={},...children){
 }
 
 export class LessonView {
-  constructor({controller,content,panel,sourcesDialog,cameraPreview,tabLabel}){
-    Object.assign(this,{controller,content,panel,sourcesDialog,cameraPreview,tabLabel});
+  // Content always comes from the controller, so switching lessons re-renders with the new lesson.
+  constructor({controller,lessons=controller.lessons,panel,sourcesDialog,cameraPreview,tabLabel}){
+    Object.assign(this,{controller,lessons,panel,sourcesDialog,cameraPreview,tabLabel});
     this.el={
       progress:panel.querySelector('#lessonProgress'),notice:panel.querySelector('#lessonNotice'),steps:panel.querySelector('#lessonSteps'),
       content:panel.querySelector('#lessonContent'),camera:panel.querySelector('#lessonCamera'),actions:panel.querySelector('#lessonActions'),nav:panel.querySelector('#lessonNav'),
@@ -33,6 +34,7 @@ export class LessonView {
     controller.addEventListener('change',({detail})=>this.render(detail));
     this.render(controller.state);
   }
+  get content(){return this.controller.content;}
   tx(value){return t(value,this.controller.lang);}
   ui(key){return this.tx(this.content.ui[key]);}
 
@@ -41,7 +43,7 @@ export class LessonView {
     const handlers={
       start:()=>c.next(),next:()=>c.next(),back:()=>c.back(),restart:()=>c.restart(),exit:()=>c.exit(),
       replay:()=>c.replay(),startCamera:()=>c.startCamera(),useDemo:()=>c.useDemonstration(),capture:()=>c.captureStart(),ready:()=>c.readyToContinue(),
-      group:()=>c.showGroup(arg),answer:()=>c.choose(arg),tryAnother:()=>c.retryQuestion(),lang:()=>c.setLanguage(arg),sources:()=>this.openSources(arg),
+      group:()=>c.showGroup(arg),lesson:()=>c.setLesson(arg),answer:()=>c.choose(arg),tryAnother:()=>c.retryQuestion(),lang:()=>c.setLanguage(arg),sources:()=>this.openSources(arg),
     };
     handlers[name]?.();
   }
@@ -89,9 +91,15 @@ export class LessonView {
     this.lastStep=state.step;
     if(this.sourcesDialog.open)this.fillSources();
   }
-  render_intro(){
+  // Lesson picker: only shown when there is more than one lesson.
+  picker(state){
+    if(this.lessons.length<2)return [];
+    return [h('div',{className:'lesson-groups lesson-picker',role:'group','aria-label':this.ui('chooseLesson')},this.lessons.map(lesson=>
+      h('button',{type:'button',className:'lesson-group',dataset:{action:`lesson:${lesson.id}`},'aria-pressed':String(lesson.id===state.lessonId)},this.tx(lesson.ui.shortName))))];
+  }
+  render_intro(state){
     return {
-      body:[h('span',{className:'eyebrow lesson-label',text:this.ui('objectiveLabel')}),this.claim('objective','lesson-claim lesson-lead'),h('p',{text:this.ui('whatYouWillDo')})],
+      body:[...this.picker(state),h('span',{className:'eyebrow lesson-label',text:this.ui('objectiveLabel')}),this.claim('objective','lesson-claim lesson-lead'),h('p',{text:this.ui('whatYouWillDo')})],
       actions:[this.button('start',this.ui('start')),this.button('exit',this.ui('returnToExplore'),'outline')],
     };
   }
@@ -103,7 +111,7 @@ export class LessonView {
     const s=state.tryState,status=this.content.ui.status;
     const key=s==='position'?(state.notice==='notVisible'||!state.armVisible?'notVisible':'position'):s==='tracking'?(state.trackStatus==='lost'?'lost':'tracking'):s;
     const body=[
-      h('p',{className:'lesson-arm',text:this.ui('armLabel')}),
+      h('p',{className:'lesson-arm',text:this.ui('limbLabel')}),
       h('span',{className:'eyebrow lesson-label',text:this.ui('startPositionLabel')}),this.claim('startPosition'),
       h('span',{className:'eyebrow lesson-label',text:this.ui('movementLabel')}),this.claim('movement'),
     ];

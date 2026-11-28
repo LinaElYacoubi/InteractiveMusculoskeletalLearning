@@ -204,3 +204,20 @@ test('lesson calibration with a segment subset drives only those bones (elbow le
   }
   rig.invalidate(); assert.equal(rig.calibrated, false);
 });
+
+test('knee lesson calibration drives only the right thigh and shin through a standing knee curl', async () => {
+  const person = await loadRig(), avatar = await loadRig(), rig = new PoseRetargeter(avatar);
+  rig.calibrate(capture(person).worldLandmarks, false, ['thigh.R', 'shin.R']);
+  rotateWorld(person, 'shin.R', new Vector3(1, 0, 0), 1.2); // heel toward the buttock (backward, -Z)
+  rotateWorld(person, 'forearm.R', new Vector3(1, 0, 0), -1.2);
+  for (let k = 0; k < 20; k++) rig.apply(capture(person).worldLandmarks, false, 0.08);
+  const error = angleDeg(direction(avatar, 'shin.R'), direction(person, 'shin.R'));
+  assert.ok(error < 10, `right shin follows the visitor (off by ${error.toFixed(1)} degrees)`);
+  const thigh = angleDeg(direction(avatar, 'thigh.R'), direction(person, 'thigh.R'));
+  assert.ok(thigh < 8, `right thigh stays pointing down (off by ${thigh.toFixed(1)} degrees)`);
+  assert.ok(position(avatar, 'foot.R').z < position(avatar, 'shin.R').z - 0.05, 'the heel moves behind the knee, not in front');
+  for (const name of ['forearm.R', 'shin.L', 'thigh.L', 'head', 'chest']) {
+    const bone = avatar.bones.get(name);
+    assert.ok(bone.quaternion.angleTo(avatar.rest.get(name).quaternion) < 1e-6, `${name} stays at rest`);
+  }
+});
